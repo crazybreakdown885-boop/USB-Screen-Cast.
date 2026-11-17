@@ -34,9 +34,9 @@ public class ScreenCaptureService extends Service {
  }
  void captureOnce(){Image image=null;try{
   image=reader.acquireLatestImage();if(image==null){handler.postDelayed(()->captureOnce(),300);return;}
-  Image.Plane p=image.getPlanes()[0];int pixel=p.getPixelStride(),row=p.getRowStride();Bitmap full=Bitmap.createBitmap(row/pixel,image.getHeight(),Bitmap.Config.ARGB_8888);full.copyPixelsFromBuffer(p.getBuffer());Bitmap crop=Bitmap.createBitmap(full,0,0,image.getWidth(),image.getHeight());ByteArrayOutputStream out=new ByteArrayOutputStream();crop.compress(Bitmap.CompressFormat.JPEG,65,out);
+  Image.Plane p=image.getPlanes()[0];int pixel=p.getPixelStride(),row=p.getRowStride();Bitmap full=Bitmap.createBitmap(row/pixel,image.getHeight(),Bitmap.Config.ARGB_8888);full.copyPixelsFromBuffer(p.getBuffer());Bitmap crop=Bitmap.createBitmap(full,0,0,image.getWidth(),image.getHeight());int targetW=Math.min(1280,crop.getWidth());int targetH=(int)(crop.getHeight()*(targetW/(float)crop.getWidth()));Bitmap scaled=Bitmap.createScaledBitmap(crop,targetW,targetH,true);ByteArrayOutputStream out=new ByteArrayOutputStream();scaled.compress(Bitmap.CompressFormat.JPEG,60,out);
   Intent result=new Intent("com.nightcity.capriai.SCREEN_CAPTURED");result.setPackage(getPackageName());result.putExtra("image",Base64.encodeToString(out.toByteArray(),Base64.NO_WRAP));sendBroadcast(result);
-  full.recycle();crop.recycle();
+  full.recycle();crop.recycle();scaled.recycle();
  }catch(Exception ignored){}finally{if(image!=null)image.close();stopSelf();}}
  @Override public void onDestroy(){if(reader!=null)reader.close();if(projection!=null)projection.stop();stopForeground(true);super.onDestroy();}
 }
