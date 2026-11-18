@@ -48,10 +48,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.7"
+          TAG="capri-v0.9.8"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.7" --notes "Capri 0.9.7: corrige leitura e normalização da chave API, melhora detecção de chave salva e teste de conexão; diálogos e personalidade mais naturais em PT-BR; mantém voz, animações e modo offline. APK debug ARMv7/ARM64."
+            gh release edit "$TAG" --title "Capri AI Android 0.9.8" --notes "Capri 0.9.8: movimentos visíveis no app e na sobreposição, troca de poses, dança com detecção de áudio em reprodução, minigame de tocar no diamante, interação sentada no balão e correção do modo rosto que era ativado aleatoriamente. APK debug ARMv7/ARM64."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.7" --notes "Capri 0.9.7: corrige leitura e normalização da chave API, melhora detecção de chave salva e teste de conexão; diálogos e personalidade mais naturais em PT-BR; mantém voz, animações e modo offline. APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.8" --notes "Capri 0.9.8: movimentos visíveis no app e na sobreposição, troca de poses, dança com detecção de áudio em reprodução, minigame de tocar no diamante, interação sentada no balão e correção do modo rosto que era ativado aleatoriamente. APK debug ARMv7/ARM64."
           fi
