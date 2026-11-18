@@ -9,8 +9,6 @@ import android.view.*;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.*;
 import android.text.TextUtils;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
 import org.json.*;
 import java.net.*;
 import java.io.*;
@@ -28,7 +26,6 @@ public class OverlayService extends Service {
     FrameLayout window;
     CapriCharacterView character;
     TextView bubble,gameToken;
-    TextToSpeech autoTts;
     int gameScore=0;
     WindowManager.LayoutParams params;
     final Handler motionHandler=new Handler(Looper.getMainLooper());
@@ -101,7 +98,7 @@ public class OverlayService extends Service {
             }
         });
         wm.addView(window,params);
-        autoTts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){autoTts.setLanguage(new Locale("pt","BR"));autoTts.setSpeechRate(getPrefs().getInt("voice_rate",92)/100f);autoTts.setPitch(getPrefs().getInt("voice_pitch",108)/100f);}});
+
         motionHandler.postDelayed(activityLoop,18000);
         motionHandler.postDelayed(autonomyLoop,150000);
     }
@@ -215,13 +212,6 @@ public class OverlayService extends Service {
                 public void onStart(){if(character!=null)character.setSpeaking(true);}
                 public void onFinish(String error){if(character!=null)character.setSpeaking(false);}
             });
-        }else if(autoTts!=null){
-            autoTts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
-                @Override public void onStart(String id){motionHandler.post(()->character.setSpeaking(true));}
-                @Override public void onDone(String id){motionHandler.post(()->character.setSpeaking(false));}
-                @Override public void onError(String id){motionHandler.post(()->character.setSpeaking(false));}
-            });
-            autoTts.speak(clean,TextToSpeech.QUEUE_FLUSH,null,"capri_idle_"+System.currentTimeMillis());
         }
     }
     void clampPosition(){
@@ -237,7 +227,7 @@ public class OverlayService extends Service {
         }return START_STICKY;
     }
     @Override public void onDestroy(){
-        destroyed=true;motionHandler.removeCallbacksAndMessages(null);running=false;if(autoTts!=null){autoTts.stop();autoTts.shutdown();autoTts=null;}
+        destroyed=true;motionHandler.removeCallbacksAndMessages(null);running=false;
         if(window!=null&&wm!=null)try{window.animate().cancel();character.animate().cancel();bubble.animate().cancel();wm.removeView(window);}catch(Exception ignored){}
         super.onDestroy();
     }
