@@ -21,7 +21,8 @@ public class OverlayService extends Service {
     WindowManager wm;
     FrameLayout window;
     CapriCharacterView character;
-    TextView bubble;
+    TextView bubble,gameToken;
+    int gameScore=0;
     WindowManager.LayoutParams params;
     final Handler motionHandler=new Handler(Looper.getMainLooper());
     final Random random=new Random();
@@ -56,6 +57,10 @@ public class OverlayService extends Service {
         bubble.setBackground(bd);bubble.setText("CAPRI: E aí, choom? Tô aqui.");
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-1,dp(86),Gravity.TOP);
         window.addView(bubble,bp);
+        gameToken=new TextView(this);gameToken.setText("◆");gameToken.setTextSize(27);gameToken.setTextColor(0xff28dff4);gameToken.setGravity(Gravity.CENTER);gameToken.setVisibility(View.GONE);gameToken.setShadowLayer(dp(8),0,0,0xff28dff4);
+        FrameLayout.LayoutParams gp=new FrameLayout.LayoutParams(dp(44),dp(44),Gravity.CENTER);
+        window.addView(gameToken,gp);
+        gameToken.setOnClickListener(v->{gameScore++;bubble.setText("CAPRI: Boa! Pontuação: "+gameScore+" ◆");gameToken.animate().cancel();gameToken.setTranslationX(random.nextInt(dp(110)+1)-dp(55));gameToken.setTranslationY(random.nextInt(dp(120)+1)-dp(60));gameToken.animate().scaleX(1.5f).scaleY(1.5f).setDuration(160).withEndAction(()->gameToken.animate().scaleX(1f).scaleY(1f).setDuration(160).start()).start();});
         bubble.setOnClickListener(v->{Intent a=new Intent(OverlayService.this,MainActivity.class);a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(a);});
         int type=WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         params=new WindowManager.LayoutParams(dp(205),dp(335),type,
@@ -120,6 +125,7 @@ public class OverlayService extends Service {
         character.animate().cancel();bubble.animate().cancel();
         character.setTranslationX(0f);character.setTranslationY(0f);character.setRotation(0f);
         bubble.setTranslationY(0f);bubble.setScaleX(1f);bubble.setScaleY(1f);
+        if(gameToken!=null){gameToken.animate().cancel();gameToken.setVisibility(View.GONE);gameToken.setTranslationX(0f);gameToken.setTranslationY(0f);}
         float base=getPrefs().getInt("character_scale",100)/100f;
         switch(act){
             case 0:
@@ -130,10 +136,15 @@ public class OverlayService extends Service {
                 character.animate().translationY(-dp(112)).scaleX(base*.96f).scaleY(base*.96f).rotation(3f).setDuration(800).start();
                 bubble.animate().translationY(-dp(8)).scaleX(.96f).scaleY(1.08f).setDuration(650).start();break;
             case 2:
-                character.setPose("crouch");bubble.setText("CAPRI: Só mais uma partida. Não me chama agora.");
-                character.animate().translationY(-dp(18)).rotation(-12f).setDuration(260).withEndAction(()->character.animate().rotation(12f).setDuration(260).withEndAction(()->character.animate().rotation(0).setDuration(260).start()).start()).start();break;
+                character.setPose("crouch");gameScore=0;gameToken.setVisibility(View.VISIBLE);bubble.setText("CAPRI: Mini-game! Toca no diamante antes que ele fuja. 0 pontos.");
+                gameToken.setTranslationX(-dp(45));gameToken.setTranslationY(-dp(20));
+                gameToken.animate().translationX(dp(55)).translationY(dp(40)).setDuration(750).withEndAction(()->gameToken.animate().translationX(-dp(55)).translationY(-dp(35)).setDuration(750).start()).start();
+                character.animate().translationY(-dp(18)).rotation(-8f).setDuration(300).start();break;
             case 3:
-                character.setPose("back");bubble.setText("CAPRI: *dança no ritmo de uma música* ♪");
+                character.setPose("back");
+                android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
+                boolean musicPlaying=audio!=null&&audio.isMusicActive();
+                bubble.setText(musicPlaying?"CAPRI: Essa música tá boa. *balança no ritmo* ♪":"CAPRI: *dança no ritmo de uma batida que inventou* ♪");
                 character.animate().translationY(-dp(26)).rotation(13f).setDuration(320).withEndAction(()->character.animate().rotation(-13f).setDuration(320).withEndAction(()->character.animate().rotation(0).translationY(0).setDuration(320).start()).start()).start();break;
             case 4:
                 character.setPose("lie");bubble.setText("CAPRI: Cinco minutinhos. Talvez dez.");
