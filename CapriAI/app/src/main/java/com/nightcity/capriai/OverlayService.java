@@ -34,7 +34,7 @@ public class OverlayService extends Service {
     final Handler motionHandler=new Handler(Looper.getMainLooper());
     final Random random=new Random();
     boolean dragging=false,destroyed=false;
-    final Runnable activityLoop=new Runnable(){public void run(){if(destroyed)return;if(!dragging&&getPrefs().getBoolean("idle_activities",true))idleActivity();motionHandler.postDelayed(this,45000+random.nextInt(45000));}};
+    final Runnable activityLoop=new Runnable(){public void run(){if(destroyed)return;if(!dragging&&getPrefs().getBoolean("idle_activities",true))idleActivity();motionHandler.postDelayed(this,22000+random.nextInt(18000));}};
     long lastTap=0;
     final Runnable autonomyLoop=new Runnable(){public void run(){if(destroyed)return;maybeSpeakSpontaneously();motionHandler.postDelayed(this,150000+random.nextInt(150000));}};
     int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
@@ -142,6 +142,11 @@ public class OverlayService extends Service {
                     character.animate().rotation(7f).setDuration(d/2).withEndAction(()->character.animate().rotation(-7f).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).setDuration(d/3).start()).start()).start();
                 }else character.animate().translationY(-dp(4)).setDuration(d).start();
                 break;
+            case "dance":character.animate().rotation(7f).translationY(-dp(9)).setDuration(d/2).withEndAction(()->character.animate().rotation(-7f).translationY(0).setDuration(d/2).start()).start();break;
+            case "twirl":character.animate().rotationBy(360f).setDuration(d+500).start();break;
+            case "bounce":character.animate().translationY(-dp(18)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
+            case "curtsy":character.animate().translationY(dp(12)).scaleY(base*.92f).rotation(3f).setDuration(d).start();break;
+            case "peek":character.animate().translationX(-dp(12)).rotation(-6f).setDuration(d/2).withEndAction(()->character.animate().translationX(0).rotation(0).setDuration(d/2).start()).start();break;
             default:
                 character.animate().translationY(-dp(5)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
         }
@@ -205,12 +210,19 @@ public class OverlayService extends Service {
         String clean=line.trim();if(clean.length()>220)clean=clean.substring(0,220);
         bubble.setText("CAPRI: "+clean);character.setMood(clean);character.setPose("sit");character.react();
         getPrefs().edit().putLong("last_user_interaction",System.currentTimeMillis()).apply();
-        autoTts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
-            @Override public void onStart(String id){motionHandler.post(()->character.setSpeaking(true));}
-            @Override public void onDone(String id){motionHandler.post(()->character.setSpeaking(false));}
-            @Override public void onError(String id){motionHandler.post(()->character.setSpeaking(false));}
-        });
-        autoTts.speak(clean,TextToSpeech.QUEUE_FLUSH,null,"capri_idle_"+System.currentTimeMillis());
+        if(getPrefs().getBoolean("offline_voice_enabled",false)&&PiperOfflineVoice.isReady(this)){
+            PiperOfflineVoice.speak(this,clean,new PiperOfflineVoice.PlaybackListener(){
+                public void onStart(){if(character!=null)character.setSpeaking(true);}
+                public void onFinish(String error){if(character!=null)character.setSpeaking(false);}
+            });
+        }else if(autoTts!=null){
+            autoTts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
+                @Override public void onStart(String id){motionHandler.post(()->character.setSpeaking(true));}
+                @Override public void onDone(String id){motionHandler.post(()->character.setSpeaking(false));}
+                @Override public void onError(String id){motionHandler.post(()->character.setSpeaking(false));}
+            });
+            autoTts.speak(clean,TextToSpeech.QUEUE_FLUSH,null,"capri_idle_"+System.currentTimeMillis());
+        }
     }
     void clampPosition(){
         android.graphics.Point size=new android.graphics.Point();wm.getDefaultDisplay().getRealSize(size);
