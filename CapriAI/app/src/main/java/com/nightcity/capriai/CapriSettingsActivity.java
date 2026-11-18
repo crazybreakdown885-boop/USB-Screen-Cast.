@@ -49,12 +49,11 @@ public class CapriSettingsActivity extends Activity {
             }).start();
         });
         section("VOZ / PORTUGUÊS BRASILEIRO");
-        TextView voiceInfo=text("Capri fala junto com as mensagens. O app seleciona automaticamente a melhor voz pt-BR instalada, priorizando vozes de maior qualidade e que funcionam offline. A voz exata depende do mecanismo de fala do Android.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
-        Button voiceSettings=button("ESCOLHER / BAIXAR VOZ DO ANDROID");page.addView(voiceSettings,new LinearLayout.LayoutParams(-1,dp(44)));
-        voiceSettings.setOnClickListener(v->{try{startActivity(new Intent("com.android.settings.TTS_SETTINGS"));}catch(Exception e){startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}});
+        TextView voiceInfo=text("VOZ NEURAL ONLINE: usa Gemini TTS, não a voz instalada no celular. Selecione Google Gemini em CONVERSA / MODELO e use uma chave Gemini válida. A voz é sintética e original; não imita uma dubladora sem autorização.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
+        check("Usar voz neural online (sem voz padrão do celular)","cloud_voice",true);
+        String[] voiceNames={"Leda","Kore","Aoede","Zephyr","Puck","Fenrir","Callirrhoe","Autonoe","Enceladus","Iapetus","Umbriel","Algieba","Despina","Erinome","Algenib","Rasalgethi","Laomedeia","Achernar","Alnilam","Schedar","Gacrux","Pulcherrima","Achird","Zubenelgenubi","Vindemiatrix","Sadachbia","Sadaltager","Sulafat"};
+        Spinner voiceChoice=new Spinner(this);voiceChoice.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,voiceNames));String savedVoice=prefs.getString("voice_name","Leda");int vi=java.util.Arrays.asList(voiceNames).indexOf(savedVoice);voiceChoice.setSelection(vi<0?0:vi);row("Voz neural",voiceChoice);
         check("Ativar fala da Capri","voice_enabled",true);
-        seek("Velocidade da fala","voice_rate",50,200,92);
-        seek("Tom da voz","voice_pitch",50,200,108);
         check("Ler respostas em voz alta","voice_replies",true);
         section("PERSONAGEM");
         check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
@@ -91,7 +90,7 @@ public class CapriSettingsActivity extends Activity {
             if("Offline".equals(p)&&!enteredKey.isEmpty())p="OpenAI-compatible";
             try {
                 ApiKeyStore.save(this,enteredKey);
-                prefs.edit().remove("api_key").putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("character_pose",poses[pose.getSelectedItemPosition()]).apply();
+                prefs.edit().remove("api_key").putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("character_pose",poses[pose.getSelectedItemPosition()]).putString("voice_name",voiceNames[voiceChoice.getSelectedItemPosition()]).apply();
                 Toast.makeText(this,enteredKey.isEmpty()?"Chave removida. Modo offline disponível.":"Chave salva com criptografia. Capri pronta para conectar online.",Toast.LENGTH_LONG).show();finish();
             } catch(Exception ex) {
                 new AlertDialog.Builder(this).setTitle("Não foi possível proteger a chave").setMessage(ex.getMessage()).setPositiveButton("OK",null).show();
