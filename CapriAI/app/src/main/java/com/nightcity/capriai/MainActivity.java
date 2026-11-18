@@ -328,7 +328,7 @@ public class MainActivity extends Activity {
     void requestScreenRead(){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
         if(sp.getString("ai_provider","OpenAI-compatible").equals("Offline")){addMessage("CAPRI","Escolha um modelo com visão nas configurações para eu enxergar a tela.",true);return;}
-        if(!sp.getString("ai_provider","OpenAI-compatible").equals("Ollama local")&&sp.getString("api_key","").isEmpty()){addMessage("CAPRI","Configure sua chave de API antes de ativar minha visão.",true);return;}
+        if(!sp.getString("ai_provider","OpenAI-compatible").equals("Ollama local")&&ApiKeyStore.get(this).isEmpty()){addMessage("CAPRI","Configure sua chave de API antes de ativar minha visão.",true);return;}
         MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),SCREEN_REQUEST);
     }
     @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==7&&c==RESULT_OK&&d!=null){ArrayList<String>a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty()){prompt.setText(a.get(0));sendMessage();}}if(r==SCREEN_REQUEST&&c==RESULT_OK&&d!=null){Intent s=new Intent(this,ScreenCaptureService.class);s.putExtra("resultCode",c);s.putExtra("data",d);s.putExtra("continuous",getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false));startForegroundService(s);addMessage("SISTEMA","Permissão concedida. Capturando a tela atual...",false);}}
