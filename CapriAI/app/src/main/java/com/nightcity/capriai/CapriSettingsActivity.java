@@ -83,7 +83,9 @@ public class CapriSettingsActivity extends Activity {
         Button save=button("SALVAR CONFIGURAÇÕES");LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));sp.topMargin=dp(18);page.addView(save,sp);
         save.setOnClickListener(v->{
             String p=providers[provider.getSelectedItemPosition()];
-            prefs.edit().putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("api_key",api.getText().toString().trim()).putString("character_pose",poses[pose.getSelectedItemPosition()]).apply();
+            String enteredKey=api.getText().toString().trim();
+            if("Offline".equals(p)&&!enteredKey.isEmpty())p="OpenAI-compatible";
+            prefs.edit().putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("api_key",enteredKey).putString("character_pose",poses[pose.getSelectedItemPosition()]).apply();
             Toast.makeText(this,"Configurações salvas, choom.",Toast.LENGTH_SHORT).show();finish();
         });
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
