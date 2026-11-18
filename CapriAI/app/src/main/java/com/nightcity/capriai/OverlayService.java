@@ -27,14 +27,10 @@ public class OverlayService extends Service {
     final Handler motionHandler=new Handler(Looper.getMainLooper());
     final Random random=new Random();
     boolean dragging=false,destroyed=false;
-    final Runnable activityLoop=new Runnable(){public void run(){if(destroyed)return;if(!dragging&&getPrefs().getBoolean("idle_activities",true))idleActivity();motionHandler.postDelayed(this,8500+random.nextInt(6500));}};
+    final Runnable activityLoop=new Runnable(){public void run(){if(destroyed)return;if(!dragging&&getPrefs().getBoolean("idle_activities",true))idleActivity();motionHandler.postDelayed(this,45000+random.nextInt(45000));}};
     long lastTap=0;
     int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
-    final Runnable motionLoop=new Runnable(){@Override public void run(){
-        if(destroyed||dragging||!getPrefs().getBoolean("free_roam",true))return;
-        if(getPrefs().getBoolean("teleport_enabled",true)&&random.nextInt(4)==0)teleportToRandom();
-        else glideToRandom();
-    }};
+    final Runnable motionLoop=new Runnable(){@Override public void run(){ /* Sem deslocamento aleatório: a personagem só se move como parte de uma ação contextual. */ }};
     android.content.SharedPreferences getPrefs(){return getSharedPreferences("capri_settings",0);}
     @Override public IBinder onBind(Intent i){return null;}
 
@@ -86,12 +82,10 @@ public class OverlayService extends Service {
                     case MotionEvent.ACTION_UP:
                         if(!moved){
                             long now=SystemClock.uptimeMillis();
-                            if(now-lastTap<360&&getPrefs().getBoolean("teleport_enabled",true))teleportToRandom();
-                            else{
-                                character.react();
-                                character.animate().translationY(-dp(24)).setDuration(180).withEndAction(()->character.animate().translationY(0).setDuration(220).start()).start();
-                                bubble.setText("CAPRI: Hm? Quer alguma coisa?");
-                            }
+                            character.react();
+                            character.setMood("curiosa");
+                            character.animate().translationY(-dp(12)).rotation(-2f).setDuration(240).withEndAction(()->character.animate().translationY(0).rotation(0).setDuration(300).start()).start();
+                            bubble.setText("CAPRI: Opa, chamou minha atenção.");
                             lastTap=now;
                         }else getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
                         dragging=false;scheduleMotion(2800);return true;
@@ -99,103 +93,55 @@ public class OverlayService extends Service {
             }
         });
         wm.addView(window,params);
-        scheduleMotion(2200);
-        motionHandler.postDelayed(activityLoop,5000);
+        motionHandler.postDelayed(activityLoop,18000);
     }
 
-    void scheduleMotion(long delay){
-        motionHandler.removeCallbacks(motionLoop);
-        if(!destroyed&&getPrefs().getBoolean("free_roam",true))motionHandler.postDelayed(motionLoop,delay);
-    }
-    void randomizeForm(){
-        if(getPrefs().getBoolean("auto_morph",true)){
-            String[] poses={"sit","lie","crouch","back"};
-            character.setPose(poses[random.nextInt(poses.length)]);
-            character.setFaceOnly(getPrefs().getBoolean("face_only",false));
-        }
-        float scale=getPrefs().getInt("character_scale",100)/100f;
-        float variation=.88f+random.nextFloat()*.24f;
-        character.animate().scaleX(scale*variation).scaleY(scale*variation).rotation(-5f+random.nextFloat()*10f).setDuration(500).setInterpolator(new DecelerateInterpolator()).start();
-
-    }
     void idleActivity(){
         if(character==null||bubble==null||destroyed||dragging)return;
-        int act=random.nextInt(6);
+        CapriActionEngine.Action action=CapriActionEngine.next();
         character.animate().cancel();bubble.animate().cancel();
         character.setTranslationX(0f);character.setTranslationY(0f);character.setRotation(0f);
         bubble.setTranslationY(0f);bubble.setScaleX(1f);bubble.setScaleY(1f);
-        if(gameToken!=null){gameToken.animate().cancel();gameToken.setVisibility(View.GONE);gameToken.setTranslationX(0f);gameToken.setTranslationY(0f);}
         float base=getPrefs().getInt("character_scale",100)/100f;
-        character.setFaceOnly(false);
-        switch(act){
-            case 0:
-                character.setPose("back");bubble.setText("CAPRI: *se espreguiça e estica os braços*");
-                character.animate().translationY(-dp(34)).scaleX(base*1.08f).scaleY(base*.90f).rotation(-8f).setDuration(850).start();break;
-            case 1:
-                character.setPose("sit");bubble.setText("CAPRI: Essa caixa é minha agora.");
-                character.animate().translationY(-dp(112)).scaleX(base*.96f).scaleY(base*.96f).rotation(3f).setDuration(800).start();
-                bubble.animate().translationY(-dp(8)).scaleX(.96f).scaleY(1.08f).setDuration(650).start();break;
-            case 2:
-                character.setPose("crouch");gameScore=0;gameToken.setVisibility(View.VISIBLE);bubble.setText("CAPRI: Mini-game! Toca no diamante antes que ele fuja. 0 pontos.");
-                gameToken.setTranslationX(-dp(45));gameToken.setTranslationY(-dp(20));
-                gameToken.animate().translationX(dp(55)).translationY(dp(40)).setDuration(750).withEndAction(()->gameToken.animate().translationX(-dp(55)).translationY(-dp(35)).setDuration(750).start()).start();
-                character.animate().translationY(-dp(18)).rotation(-8f).setDuration(300).start();break;
-            case 3:
-                character.setPose("back");
+        character.setFaceOnly(false);character.setPose(action.pose);character.setMood(action.mood);
+        bubble.setText("CAPRI: "+action.caption);
+        long d=action.duration;
+        switch(action.kind){
+            case "stretch":
+                character.animate().translationY(-dp(25)).scaleX(base*1.04f).scaleY(base*.96f).rotation(-3f).setDuration(d).start();break;
+            case "look": case "read": case "lean":
+                character.animate().translationY(-dp(9)).translationX(dp(7)).rotation(-4f).setDuration(d).start();
+                bubble.animate().scaleX(1.02f).setDuration(d/2).start();break;
+            case "hair": case "wave":
+                character.animate().rotation(5f).translationY(-dp(5)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).setDuration(d/2).start()).start();break;
+            case "yawn": case "rest":
+                character.animate().translationY(dp(8)).scaleX(base*1.03f).scaleY(base*.97f).rotation(2f).setDuration(d).start();break;
+            case "smile": case "giggle":
+                character.animate().translationY(-dp(8)).rotation(-2f).setDuration(d/2).withEndAction(()->character.animate().translationY(0).rotation(0).setDuration(d/2).start()).start();break;
+            case "listen": case "think": case "lookup":
+                character.animate().rotation(-5f).translationX(-dp(4)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).translationX(0f).setDuration(d/2).start()).start();break;
+            case "shrug": case "fidget":
+                character.animate().rotation(4f).translationX(dp(4)).setDuration(d/2).withEndAction(()->character.animate().rotation(-3f).translationX(-dp(3)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).translationX(0f).setDuration(d/3).start()).start()).start();break;
+            case "nod":
+                character.animate().translationY(dp(4)).setDuration(d/3).withEndAction(()->character.animate().translationY(-dp(4)).setDuration(d/3).withEndAction(()->character.animate().translationY(0).setDuration(d/3).start()).start()).start();break;
+            case "crouch":
+                character.animate().translationY(dp(10)).scaleY(base*.94f).setDuration(d).start();break;
+            case "sway":
                 android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-                boolean musicPlaying=audio!=null&&audio.isMusicActive();
-                bubble.setText(musicPlaying?"CAPRI: Essa música tá boa. *balança no ritmo* ♪":"CAPRI: *dança no ritmo de uma batida que inventou* ♪");
-                character.animate().translationY(-dp(26)).rotation(13f).setDuration(320).withEndAction(()->character.animate().rotation(-13f).setDuration(320).withEndAction(()->character.animate().rotation(0).translationY(0).setDuration(320).start()).start()).start();break;
-            case 4:
-                character.setPose("lie");bubble.setText("CAPRI: Cinco minutinhos. Talvez dez.");
-                character.animate().translationY(-dp(12)).rotation(-5f).scaleX(base*1.08f).setDuration(700).start();break;
+                if(audio!=null&&audio.isMusicActive()){
+                    character.animate().rotation(7f).setDuration(d/2).withEndAction(()->character.animate().rotation(-7f).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).setDuration(d/3).start()).start()).start();
+                }else character.animate().translationY(-dp(4)).setDuration(d).start();
+                break;
             default:
-                character.setPose(new String[]{"sit","lie","crouch","back"}[random.nextInt(4)]);bubble.setText("CAPRI: Olha isso. Combo de três pulos!");
-                character.animate().translationY(-dp(52)).setDuration(260).withEndAction(()->character.animate().translationY(0).setDuration(260).withEndAction(()->character.animate().translationY(-dp(38)).setDuration(220).withEndAction(()->character.animate().translationY(0).setDuration(220).start()).start()).start()).start();break;
+                character.animate().translationY(-dp(5)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
         }
-        motionHandler.postDelayed(()->{if(destroyed||character==null||dragging)return;character.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(550).start();bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(450).start();bubble.setText("CAPRI: Tô aqui. O que foi?");character.setFaceOnly(getPrefs().getBoolean("face_only",false));},5200);
-    }
-    int[] randomPosition(){
-        android.graphics.Point size=new android.graphics.Point();wm.getDefaultDisplay().getRealSize(size);
-        int maxX=Math.max(0,size.x-params.width),maxY=Math.max(dp(24),size.y-params.height);
-        int x=random.nextInt(Math.max(1,maxX+1));
-        int y=dp(24)+random.nextInt(Math.max(1,maxY-dp(24)+1));
-        return new int[]{x,y};
-    }
-    void glideToRandom(){
-        int[] target=randomPosition();int startX=params.x,startY=params.y;
-        long started=SystemClock.uptimeMillis();long duration=1800+random.nextInt(1500);
-        final Runnable[] step=new Runnable[1];
-        step[0]=()->{
-            if(destroyed||dragging||window==null)return;
-            float t=Math.min(1f,(SystemClock.uptimeMillis()-started)/(float)duration);
-            float eased=t*t*(3f-2f*t);
-            params.x=startX+Math.round((target[0]-startX)*eased);
-            params.y=startY+Math.round((target[1]-startY)*eased);
-            clampPosition();try{wm.updateViewLayout(window,params);}catch(Exception ignored){}
-            if(t<1f)motionHandler.postDelayed(step[0],16);
-            else{
-                getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
-                randomizeForm();scheduleMotion(2500+random.nextInt(5500));
-            }
-        };
-        motionHandler.post(step[0]);
-    }
-    void teleportToRandom(){
-        if(destroyed||dragging||window==null)return;
-        int[] target=randomPosition();
-        character.animate().cancel();bubble.animate().cancel();
-        character.animate().alpha(0f).scaleX(.05f).scaleY(.05f).rotation(180f).setDuration(220).withEndAction(()->{
-            if(destroyed||dragging)return;
-            params.x=target[0];params.y=target[1];clampPosition();
-            try{wm.updateViewLayout(window,params);}catch(Exception ignored){}
-            randomizeForm();
-            bubble.setAlpha(0f);
-            character.animate().alpha(1f).scaleX(getPrefs().getInt("character_scale",100)/100f).scaleY(getPrefs().getInt("character_scale",100)/100f).rotation(0f).setDuration(280).setInterpolator(new DecelerateInterpolator()).start();
-            bubble.animate().alpha(1f).setDuration(300).start();
-            getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
-            scheduleMotion(3500+random.nextInt(5500));
-        }).start();
+        motionHandler.postDelayed(()->{
+            if(destroyed||character==null||dragging)return;
+            character.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(450).start();
+            bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(350).start();
+            character.setPose(getPrefs().getString("character_pose","sit"));
+            character.setFaceOnly(getPrefs().getBoolean("face_only",false));
+        },d+350);
     }
     void clampPosition(){
         android.graphics.Point size=new android.graphics.Point();wm.getDefaultDisplay().getRealSize(size);
@@ -203,7 +149,7 @@ public class OverlayService extends Service {
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         if(i!=null){String action=i.getAction();
-            if(ACTION_SAY.equals(action)){String s=i.getStringExtra(EXTRA_TEXT);if(s!=null&&!s.trim().isEmpty()){bubble.setText("CAPRI: "+s);character.react();}}
+            if(ACTION_SAY.equals(action)){String s=i.getStringExtra(EXTRA_TEXT);if(s!=null&&!s.trim().isEmpty()){bubble.setText("CAPRI: "+s);character.react();character.setMood(s);}}
             else if(ACTION_SPEAK.equals(action))character.setSpeaking(i.getBooleanExtra("speaking",false));
             else if(ACTION_POSE.equals(action))character.setPose(i.getStringExtra("pose"));
             else if(ACTION_MOOD.equals(action))character.setMood(i.getStringExtra("mood_text"));
