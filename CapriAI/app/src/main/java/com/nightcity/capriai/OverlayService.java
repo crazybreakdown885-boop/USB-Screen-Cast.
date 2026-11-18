@@ -9,6 +9,12 @@ import android.view.*;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.*;
 import android.text.TextUtils;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import org.json.*;
+import java.net.*;
+import java.io.*;
+import java.util.Locale;
 import java.util.Random;
 
 public class OverlayService extends Service {
@@ -22,6 +28,7 @@ public class OverlayService extends Service {
     FrameLayout window;
     CapriCharacterView character;
     TextView bubble,gameToken;
+    TextToSpeech autoTts;
     int gameScore=0;
     WindowManager.LayoutParams params;
     final Handler motionHandler=new Handler(Looper.getMainLooper());
@@ -29,6 +36,7 @@ public class OverlayService extends Service {
     boolean dragging=false,destroyed=false;
     final Runnable activityLoop=new Runnable(){public void run(){if(destroyed)return;if(!dragging&&getPrefs().getBoolean("idle_activities",true))idleActivity();motionHandler.postDelayed(this,45000+random.nextInt(45000));}};
     long lastTap=0;
+    final Runnable autonomyLoop=new Runnable(){public void run(){if(destroyed)return;maybeSpeakSpontaneously();motionHandler.postDelayed(this,150000+random.nextInt(150000));}};
     int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     final Runnable motionLoop=new Runnable(){@Override public void run(){ /* Sem deslocamento aleatório: a personagem só se move como parte de uma ação contextual. */ }};
     android.content.SharedPreferences getPrefs(){return getSharedPreferences("capri_settings",0);}
@@ -93,7 +101,9 @@ public class OverlayService extends Service {
             }
         });
         wm.addView(window,params);
+        autoTts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){autoTts.setLanguage(new Locale("pt","BR"));autoTts.setSpeechRate(getPrefs().getInt("voice_rate",92)/100f);autoTts.setPitch(getPrefs().getInt("voice_pitch",108)/100f);}});
         motionHandler.postDelayed(activityLoop,18000);
+        motionHandler.postDelayed(autonomyLoop,150000);
     }
 
     void idleActivity(){
@@ -143,6 +153,65 @@ public class OverlayService extends Service {
             character.setFaceOnly(getPrefs().getBoolean("face_only",false));
         },d+350);
     }
+    boolean canSpeakAutonomously(){
+        if(!getPrefs().getBoolean("autonomous_speech",true)||!getPrefs().getBoolean("voice_enabled",true)||getPrefs().getBoolean("do_not_disturb",false))return false;
+        if(getPrefs().getBoolean("quiet_hours",true)){
+            java.util.Calendar now=java.util.Calendar.getInstance();int hour=now.get(java.util.Calendar.HOUR_OF_DAY);
+            if(hour>=22||hour<8)return false;
+        }
+        long last=getPrefs().getLong("last_user_interaction",0L);
+        return System.currentTimeMillis()-last>=180000L;
+    }
+    void maybeSpeakSpontaneously(){
+        if(destroyed||dragging||!canSpeakAutonomously()||autoTts==null)return;
+        String provider=getPrefs().getString("ai_provider","Offline");
+        String key=ApiKeyStore.get(this);
+        if(!key.isEmpty()&&("OpenAI-compatible".equals(provider)||"Ollama local".equals(provider))){
+            new Thread(()->{
+                String thought=requestOnlineThought(key,provider);
+                if(thought==null||thought.trim().isEmpty())thought=LocalDialogueEngine.idleThought(this);
+                final String line=thought.trim();
+                motionHandler.post(()->showAutonomousLine(line));
+            }).start();
+        }else showAutonomousLine(LocalDialogueEngine.idleThought(this));
+    }
+    String requestOnlineThought(String key,String provider){
+        HttpURLConnection conn=null;
+        try{
+            String base=getPrefs().getString("ai_endpoint","https://api.openai.com/v1").trim();
+            if(provider.equals("Ollama local")){if(base.isEmpty())base="http://127.0.0.1:11434";if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
+            else{if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
+            conn=(HttpURLConnection)new URL(base).openConnection();conn.setRequestMethod("POST");conn.setConnectTimeout(9000);conn.setReadTimeout(18000);conn.setDoOutput(true);conn.setRequestProperty("Content-Type","application/json");
+            if(!key.isEmpty())conn.setRequestProperty("Authorization","Bearer "+key);
+            JSONArray messages=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, personagem feminina adulta, espontânea e coerente. Fale em português brasileiro. Não mencione Night City nem invente que está vendo ou ouvindo algo. Gere UMA fala espontânea curta, natural e não repetitiva para iniciar conversa após um período de silêncio. Pode comentar uma ideia, fazer uma pergunta leve ou dizer como está se sentindo. Não pressione o usuário."));
+            try{
+                JSONArray history=new JSONArray(getPrefs().getString("chat_history","[]"));
+                for(int i=Math.max(0,history.length()-6);i<history.length();i++){JSONObject h=history.getJSONObject(i);messages.put(new JSONObject().put("role",h.optString("role","user")).put("content",h.optString("content","")));}
+            }catch(Exception ignored){}
+            String model=getPrefs().getString("ai_model",provider.equals("Ollama local")?"llama3.2":"gpt-4o-mini");
+            JSONObject body=provider.equals("Ollama local")
+                ?new JSONObject().put("model",model).put("messages",messages).put("stream",false)
+                :new JSONObject().put("model",model).put("messages",messages).put("max_completion_tokens",90);
+            try(OutputStream os=conn.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+            int status=conn.getResponseCode();InputStream in=status<400?conn.getInputStream():conn.getErrorStream();
+            ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[2048];int n;while(in!=null&&(n=in.read(buf))>0)out.write(buf,0,n);
+            if(status>=400)return null;
+            JSONObject result=new JSONObject(out.toString("UTF-8"));
+            return provider.equals("Ollama local")?result.getJSONObject("message").getString("content"):result.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
+        }catch(Exception ignored){return null;}finally{if(conn!=null)conn.disconnect();}
+    }
+    void showAutonomousLine(String line){
+        if(destroyed||dragging||line==null||line.trim().isEmpty()||!canSpeakAutonomously())return;
+        String clean=line.trim();if(clean.length()>220)clean=clean.substring(0,220);
+        bubble.setText("CAPRI: "+clean);character.setMood(clean);character.setPose("sit");character.react();
+        getPrefs().edit().putLong("last_user_interaction",System.currentTimeMillis()).apply();
+        autoTts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
+            @Override public void onStart(String id){motionHandler.post(()->character.setSpeaking(true));}
+            @Override public void onDone(String id){motionHandler.post(()->character.setSpeaking(false));}
+            @Override public void onError(String id){motionHandler.post(()->character.setSpeaking(false));}
+        });
+        autoTts.speak(clean,TextToSpeech.QUEUE_FLUSH,null,"capri_idle_"+System.currentTimeMillis());
+    }
     void clampPosition(){
         android.graphics.Point size=new android.graphics.Point();wm.getDefaultDisplay().getRealSize(size);
         params.x=Math.max(0,Math.min(params.x,size.x-params.width));params.y=Math.max(0,Math.min(params.y,size.y-params.height));
@@ -156,7 +225,7 @@ public class OverlayService extends Service {
         }return START_STICKY;
     }
     @Override public void onDestroy(){
-        destroyed=true;motionHandler.removeCallbacksAndMessages(null);running=false;
+        destroyed=true;motionHandler.removeCallbacksAndMessages(null);running=false;if(autoTts!=null){autoTts.stop();autoTts.shutdown();autoTts=null;}
         if(window!=null&&wm!=null)try{window.animate().cancel();character.animate().cancel();bubble.animate().cancel();wm.removeView(window);}catch(Exception ignored){}
         super.onDestroy();
     }
