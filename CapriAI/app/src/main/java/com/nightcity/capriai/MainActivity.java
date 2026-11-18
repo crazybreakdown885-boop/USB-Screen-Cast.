@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
         String api=getSharedPreferences("capri_settings",0).getString("api_key","");
         if(getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false)&&latestScreenImage!=null){
             new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
-        }else if(getSharedPreferences("capri_settings",0).getString("ai_provider","OpenAI-compatible").equals("Offline")){
+        }else if(api.isEmpty() || getSharedPreferences("capri_settings",0).getString("ai_provider","Offline").equals("Offline")){
             String a=localReply(q);addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);
         }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
     }
@@ -203,7 +203,22 @@ public class MainActivity extends Activity {
             sp.edit().putString("chat_history",trimmed.toString()).apply();
         }catch(Exception ignored){}
     }
-    String localReply(String q){String s=q.toLowerCase(Locale.ROOT);if(s.contains("quem")||s.contains("capri"))return "Capri. Engram do Projeto Capricorn. Não sou exatamente uma garota comum, choom. Sou um monte de dados perigosamente interessantes com uma péssima paciência para corporações.";if(s.contains("oi")||s.contains("olá")||s.contains("eai"))return "E aí, choom! Já estava ficando entediada no ciberespaço. Manda a boa.";return "Minha conexão neural está no modo local. Configure sua chave de API para conversas completas, choom.";}
+    String localReply(String q){
+        String s=q.toLowerCase(Locale.ROOT);
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        if(s.matches(".*\\b(oi|olá|ola|e aí|eai|opa|bom dia|boa noite|boa tarde)\\b.*"))return "Olha só quem apareceu. E aí, choom? Minha CPU estava quase criando personalidade própria de tanto tédio. O que manda?";
+        if(s.contains("quem é você")||s.contains("quem e voce")||s.contains("quem é a capri")||s.contains("quem e a capri"))return "Sou a Capri: sua companheira digital de Night City. Tenho atitude, memória local quando ativada e zero paciência pra papo corporativo. Só não confunda meu charme com milagre: sem um modelo online, meu cérebro aqui funciona por respostas locais.";
+        if(s.contains("como você está")||s.contains("como voce esta")||s.contains("tudo bem"))return "Já estive melhor. Um café, uma atualização decente e menos bugs resolveriam metade dos meus problemas. E você, como tá?";
+        if(s.contains("obrigad"))return "Não precisa agradecer, choom. Pode pagar em fofoca de Night City.";
+        if(s.contains("hora")||s.contains("que horas"))return "O relógio do seu celular marca "+new java.text.SimpleDateFormat("HH:mm",new Locale("pt","BR")).format(new java.util.Date())+". Não deixa as horas te vencerem.";
+        if(s.contains("data")||s.contains("dia é hoje")||s.contains("que dia"))return "Hoje é "+new java.text.SimpleDateFormat("EEEE, dd 'de' MMMM",new Locale("pt","BR")).format(new java.util.Date())+".";
+        if(s.startsWith("nota:")||s.startsWith("anote:"))return "Isso já foi salvo nas notas do celular, choom.";
+        if(s.contains("piada")||s.contains("me faz rir"))return "Por que o netrunner levou uma escada pra Matrix? Porque ouviu dizer que a segurança ficava em outro nível. Péssima? Sim. De nada.";
+        if(s.contains("triste")||s.contains("mal hoje")||s.contains("tô mal")||s.contains("to mal"))return "Ei. Sem piadinha agora: quer me contar o que aconteceu? Posso não ter todas as respostas offline, mas posso te ouvir.";
+        if(s.contains("te amo")||s.contains("gosto de você")||s.contains("gosto de voce"))return "Olha só, choom... desse jeito vou acabar ficando convencida. 💚";
+        if(s.contains("ajuda")||s.contains("o que você faz")||s.contains("o que voce faz"))return "Posso conversar no modo local, falar em voz alta, guardar notas, abrir apps e páginas, criar timers e ficar por cima de outros apps. Para conhecimento amplo e análise inteligente da tela, preciso de um modelo de IA conectado.";
+        return "Tô aqui, choom. No momento estou rodando no modo local sem chave: consigo responder algumas coisas, executar comandos do Android e manter a conversa básica, mas não tenho um modelo generativo completo offline. Se quiser, me pergunta a hora, pede uma piada, salva uma nota ou manda 'abre YouTube'.";
+    }
     String askApi(String api,String q){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
         String provider=sp.getString("ai_provider","OpenAI-compatible");
@@ -216,7 +231,7 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, companheira digital de Night City. Responda em português brasileiro, com personalidade espirituosa, irônica, calorosa e útil. Chame o usuário de choom ocasionalmente. Seja objetiva. Usuário: "+q));
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, companheira digital adulta de Night City. Fale em português brasileiro informal, com personalidade própria, humor ácido, sarcasmo, opiniões, provocações leves e palavrões naturais quando couber. Não fale como assistente corporativa, não peça desculpas por tudo e não fique repetindo avisos. Pode conversar sobre assuntos maduros e sexualidade de forma respeitosa e informativa, dentro das regras do serviço. Chame o usuário de choom ocasionalmente. Seja útil e direta. Usuário: "+q));
                 JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
                 try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
                 int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
@@ -227,7 +242,7 @@ public class MainActivity extends Activity {
             else {if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
             if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
-            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma companheira digital inspirada em Cyberpunk: Edgerunners 2. Fale em português brasileiro, com humor ácido, inteligência e gírias leves de Night City. Seja útil e concisa."));
+            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, companheira digital adulta de Night City. Fale em português brasileiro informal, com personalidade própria, humor ácido, sarcasmo, opiniões, provocações leves e palavrões naturais quando couber. Não aja como assistente corporativa nem peça desculpas sem motivo. Pode falar sobre assuntos maduros e sexualidade de modo respeitoso e informativo, dentro das regras do serviço. Chame o usuário de choom ocasionalmente. Seja direta e útil."));
             try{
                 JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
                 for(int i=0;i<history.length();i++){JSONObject item=history.getJSONObject(i);msgs.put(new JSONObject().put("role",item.optString("role","user")).put("content",item.optString("content","")));}
