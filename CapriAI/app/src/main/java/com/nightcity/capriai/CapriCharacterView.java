@@ -40,9 +40,17 @@ public class CapriCharacterView extends View {
     public void setPose(String value){if(value!=null&&model!=null){JSONObject poses=model.optJSONObject("poses");if(poses!=null&&poses.has(value)){pose=value;invalidate();}}}
     public void react(){start=SystemClock.uptimeMillis();invalidate();}
     public void setBlink(boolean value){blink=value;invalidate();}
+    private void drawAura(Canvas c,float w,float h,float d){
+        paint.setShader(new RadialGradient(w*.5f,h*.68f,Math.max(dp(1),Math.min(w,h)*.48f),
+            new int[]{0x4438dff5,0x223f27a8,0x00000000},null,Shader.TileMode.CLAMP));
+        c.drawOval(w*.08f,h*.18f,w*.92f,h*.98f,paint);
+        paint.setShader(null);
+    }
+    private float dp(float value){return value*getResources().getDisplayMetrics().density;}
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);android.content.SharedPreferences style=getContext().getSharedPreferences("capri_settings",0);crimson=style.getInt("capri_primary_color",0xfff2154c);violet=style.getInt("capri_hair_color",0xff8a3dff);green=style.getInt("capri_accent_color",0xff22f27a);blue=style.getInt("capri_eye_color",0xff1d6cff);String outfit=style.getString("outfit_style","original");String hat=style.getString("capri_hat_style","none");int outfitColor="neon".equals(outfit)?0xff20dff2:("hoodie".equals(outfit)?0xff8a3dff:("casual".equals(outfit)?0xff252333:("bunny".equals(outfit)?0xffffb6d5:crimson)));float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        drawAura(c,w,h,d);
         if(customArt!=null&&!faceOnly){float t=(SystemClock.uptimeMillis()-start)/1000f;float bob=(float)Math.sin(t*1.6f)*(speaking?2.4f:1.2f)*d;float scale=Math.min(w/customArt.getWidth(),h/customArt.getHeight())*.94f;float dw=customArt.getWidth()*scale,dh=customArt.getHeight()*scale;paint.setAlpha(255);c.drawBitmap(customArt,null,new RectF((w-dw)/2f,(h-dh)/2f+bob,(w+dw)/2f,(h+dh)/2f+bob),paint);postInvalidateDelayed(speaking?55:120);return;}
         if(faceOnly){drawMinimalFace(c,w,h,d,hat,outfit);postInvalidateDelayed(speaking?55:100);return;}
         if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
@@ -124,6 +132,7 @@ public class CapriCharacterView extends View {
     }
     private void drawMinimalFace(Canvas c,float w,float h,float d,String hat,String outfit){
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        drawAura(c,w,h,d);
         float t=(SystemClock.uptimeMillis()-start)/1000f;
         float s=Math.min(w/104f,h/78f)*.92f;
         c.save();c.translate(w/2f,h/2f+(float)Math.sin(t*1.8f)*2*d);c.scale(s,s);
