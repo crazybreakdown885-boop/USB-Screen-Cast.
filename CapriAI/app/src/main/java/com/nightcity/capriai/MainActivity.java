@@ -139,11 +139,15 @@ public class MainActivity extends Activity {
         prompt.clearFocus();composerFocused=false;
         new Handler().postDelayed(()->applyImmersiveMode(true),350);
         if(handleAndroidCommand(q))return;
-        String api=getSharedPreferences("capri_settings",0).getString("api_key","");
-        if(getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false)&&latestScreenImage!=null){
+        android.content.SharedPreferences aiPrefs=getSharedPreferences("capri_settings",0);
+        String api=aiPrefs.getString("api_key","").trim();
+        String selectedProvider=aiPrefs.getString("ai_provider","Offline");
+        if(aiPrefs.getBoolean("screen_monitor",false)&&latestScreenImage!=null){
             new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
-        }else if(api.isEmpty() || getSharedPreferences("capri_settings",0).getString("ai_provider","Offline").equals("Offline")){
+        }else if("Offline".equals(selectedProvider)){
             String a=localReply(q);addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);
+        }else if(api.isEmpty()){
+            String a="Você selecionou "+selectedProvider+", mas a chave API está vazia. Abra CONFIG, cole a chave completa e toque em SALVAR CONFIGURAÇÕES. Depois use TESTAR CONEXÃO DA API.";addMessage("CAPRI",a,true);
         }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
     }
     boolean handleAndroidCommand(String raw){
