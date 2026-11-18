@@ -88,9 +88,9 @@ public class OverlayService extends Service {
                             long now=SystemClock.uptimeMillis();
                             if(now-lastTap<360&&getPrefs().getBoolean("teleport_enabled",true))teleportToRandom();
                             else{
-                                boolean compact=!getPrefs().getBoolean("face_only",false);
-                                getPrefs().edit().putBoolean("face_only",compact).apply();character.setFaceOnly(compact);
-                                Toast.makeText(OverlayService.this,compact?"Modo rosto ativado":"Personagem completa ativada",Toast.LENGTH_SHORT).show();
+                                character.react();
+                                character.animate().translationY(-dp(24)).setDuration(180).withEndAction(()->character.animate().translationY(0).setDuration(220).start()).start();
+                                bubble.setText("CAPRI: Hm? Quer alguma coisa?");
                             }
                             lastTap=now;
                         }else getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
@@ -111,8 +111,7 @@ public class OverlayService extends Service {
         if(getPrefs().getBoolean("auto_morph",true)){
             String[] poses={"sit","lie","crouch","back"};
             character.setPose(poses[random.nextInt(poses.length)]);
-            boolean face=random.nextInt(3)==0;
-            getPrefs().edit().putBoolean("face_only",face).apply();character.setFaceOnly(face);
+            character.setFaceOnly(getPrefs().getBoolean("face_only",false));
         }
         float scale=getPrefs().getInt("character_scale",100)/100f;
         float variation=.88f+random.nextFloat()*.24f;
@@ -127,6 +126,7 @@ public class OverlayService extends Service {
         bubble.setTranslationY(0f);bubble.setScaleX(1f);bubble.setScaleY(1f);
         if(gameToken!=null){gameToken.animate().cancel();gameToken.setVisibility(View.GONE);gameToken.setTranslationX(0f);gameToken.setTranslationY(0f);}
         float base=getPrefs().getInt("character_scale",100)/100f;
+        character.setFaceOnly(false);
         switch(act){
             case 0:
                 character.setPose("back");bubble.setText("CAPRI: *se espreguiça e estica os braços*");
@@ -153,7 +153,7 @@ public class OverlayService extends Service {
                 character.setPose(new String[]{"sit","lie","crouch","back"}[random.nextInt(4)]);bubble.setText("CAPRI: Olha isso. Combo de três pulos!");
                 character.animate().translationY(-dp(52)).setDuration(260).withEndAction(()->character.animate().translationY(0).setDuration(260).withEndAction(()->character.animate().translationY(-dp(38)).setDuration(220).withEndAction(()->character.animate().translationY(0).setDuration(220).start()).start()).start()).start();break;
         }
-        motionHandler.postDelayed(()->{if(destroyed||character==null||dragging)return;character.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(550).start();bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(450).start();bubble.setText("CAPRI: Tô aqui. O que foi?");},5200);
+        motionHandler.postDelayed(()->{if(destroyed||character==null||dragging)return;character.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(550).start();bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(450).start();bubble.setText("CAPRI: Tô aqui. O que foi?");character.setFaceOnly(getPrefs().getBoolean("face_only",false));},5200);
     }
     int[] randomPosition(){
         android.graphics.Point size=new android.graphics.Point();wm.getDefaultDisplay().getRealSize(size);
