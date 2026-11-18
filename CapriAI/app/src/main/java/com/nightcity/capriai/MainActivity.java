@@ -234,8 +234,47 @@ public class MainActivity extends Activity {
         while((n=in.read(b))>0)out.write(b,0,n);
         return out.toString("UTF-8");
     }
-    void askAboutScreen(String b64){String api=getPreferences(0).getString("api_key","");if(api.isEmpty()){addMessage("CAPRI","A captura chegou, mas preciso da chave de API para analisar o conteúdo visual.",true);return;}addMessage("SISTEMA","Captura de tela recebida. Analisando...",false);new Thread(()->{String a=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();}
-    String askVision(String api,String b64){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL("https://api.openai.com/v1/chat/completions").openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Authorization","Bearer "+api);c.setRequestProperty("Content-Type","application/json");JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Descreva o que está visível na captura de tela e ajude o usuário com base nela. Responda em português brasileiro como Capri, de forma objetiva." )).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, assistente útil em português brasileiro.")).put(new JSONObject().put("role","user").put("content",content));JSONObject body=new JSONObject().put("model","gpt-4o-mini").put("messages",msgs).put("max_tokens",500);try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}InputStream is=c.getResponseCode()<400?c.getInputStream():c.getErrorStream();ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[4096];int n;while((n=is.read(buf))>0)out.write(buf,0,n);if(c.getResponseCode()>=400)return "Não consegui analisar essa tela ("+c.getResponseCode()+").";return new JSONObject(out.toString("UTF-8")).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");}catch(Exception e){return "Erro ao analisar a tela: "+e.getMessage();}finally{if(c!=null)c.disconnect();}}
+    void askAboutScreen(String b64){
+        addMessage("SISTEMA","Captura de tela recebida. Analisando...",false);
+        String api=getSharedPreferences("capri_settings",0).getString("api_key","");
+        new Thread(()->{String answer=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",answer,true);speak(answer);});}).start();
+    }
+    String askVision(String api,String b64){
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        String provider=sp.getString("ai_provider","OpenAI-compatible");
+        String model=sp.getString("ai_model","gpt-4o-mini");
+        String base=sp.getString("ai_endpoint","https://api.openai.com/v1");
+        HttpURLConnection c=null;
+        try{
+            if(provider.equals("Google Gemini")){
+                if(model.isEmpty())model="gemini-2.0-flash";
+                URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
+                c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri. Leia a tela e ajude o usuário em português brasileiro, de forma direta.")).put(new JSONObject().put("inline_data",new JSONObject().put("mime_type","image/jpeg").put("data",b64)));
+                JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",600));
+                try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+                int status=c.getResponseCode();String raw=readAll(status<400?c.getInputStream():c.getErrorStream());if(status>=400)return "Gemini não conseguiu ler a tela ("+status+").";
+                return new JSONObject(raw).getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text");
+            }
+            if(provider.equals("Offline"))return "O modo offline não consegue interpretar imagens da tela.";
+            if(provider.equals("Ollama local")){if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
+            else if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";
+            c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
+            JSONObject body;
+            if(provider.equals("Ollama local")){
+                JSONArray msgs=new JSONArray().put(new JSONObject().put("role","user").put("content","Leia esta captura de tela e ajude em português brasileiro.").put("images",new JSONArray().put(b64)));
+                body=new JSONObject().put("model",model).put("messages",msgs).put("stream",false);
+            }else{
+                JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Você é Capri. Leia a captura de tela e ajude em português brasileiro, de forma direta.")).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));
+                JSONArray msgs=new JSONArray().put(new JSONObject().put("role","user").put("content",content));
+                body=new JSONObject().put("model",model).put("messages",msgs).put("max_tokens",600);
+            }
+            try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+            int status=c.getResponseCode();String raw=readAll(status<400?c.getInputStream():c.getErrorStream());if(status>=400)return "Não consegui analisar essa tela ("+status+").";
+            JSONObject result=new JSONObject(raw);return provider.equals("Ollama local")?result.getJSONObject("message").getString("content"):result.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
+        }catch(Exception e){return "Erro ao analisar a tela: "+e.getMessage();}finally{if(c!=null)c.disconnect();}
+    }
+    String readAll(InputStream in)throws Exception{ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[4096];int n;while((n=in.read(b))>0)out.write(b,0,n);return out.toString("UTF-8");}
     void toggleScreenContext(){
         if(ScreenCaptureService.active){startService(new Intent(this,ScreenCaptureService.class).setAction(ScreenCaptureService.ACTION_STOP));latestScreenImage=null;Toast.makeText(this,"Visão da tela pausada",Toast.LENGTH_SHORT).show();return;}
         requestScreenRead();
