@@ -1,4 +1,6 @@
-# Capri AI Android 0.8.0
+# Capri AI Android 0.8.0 — versão de lançamento
+
+O APK publicado na release `capri-v0.8.0` é gerado exclusivamente pelo módulo `CapriAI`.
 
 Adaptação Android independente e experimental da personagem Capri. Compatível com Android 10 ou superior e builds ARMv7/ARM64.
 
