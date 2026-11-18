@@ -56,6 +56,9 @@ public class CapriSettingsActivity extends Activity {
         check("Ativar fala da Capri","voice_enabled",true);
         check("Ler respostas em voz alta","voice_replies",true);
         section("PERSONAGEM");
+        Button artButton=button("IMPORTAR IMAGEM PNG / WEBP DA CAPRI");page.addView(artButton,new LinearLayout.LayoutParams(-1,dp(44)));
+        artButton.setOnClickListener(v->{Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);pick.addCategory(Intent.CATEGORY_OPENABLE);pick.setType("image/*");pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(pick,51);});
+        TextView artInfo=text("Use uma imagem que você tenha direito de usar. PNG com fundo transparente funciona melhor. A arte importada substitui o desenho geométrico atual na tela principal.",10,0xffa8a5b5);artInfo.setPadding(0,dp(4),0,dp(8));page.addView(artInfo);
         check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
         check("Animações corporais contextuais (sem teleporte aleatório)","idle_activities",true);
         String[] poses={"sit","lie","crouch","back"};String[] poseLabels={"Sentada","Deitada","Agachada","De costas"};Spinner pose=new Spinner(this);pose.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,poseLabels));String poseSaved=prefs.getString("character_pose","sit");int poseIndex=java.util.Arrays.asList(poses).indexOf(poseSaved);pose.setSelection(poseIndex<0?0:poseIndex);row("Pose inicial",pose);
@@ -99,6 +102,7 @@ public class CapriSettingsActivity extends Activity {
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
         setContentView(scroll);
     }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);if(requestCode==51&&resultCode==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);prefs.edit().putString("character_image_uri",uri.toString()).apply();Toast.makeText(this,"Imagem da Capri salva. Volte à tela principal para ver.",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,"Não consegui guardar essa imagem: "+e.getMessage(),Toast.LENGTH_LONG).show();}}}
     String normalizeApiKey(String value){String k=value==null?"":value.trim();if(k.regionMatches(true,0,"Bearer ",0,7))k=k.substring(7).trim();if(k.length()>=2&&((k.startsWith("\"")&&k.endsWith("\""))||(k.startsWith("\'")&&k.endsWith("\'"))))k=k.substring(1,k.length()-1).trim();return k.replaceAll("[\\r\\n\\t ]+","");}
     String runApiTest(String provider,String api,String model,String endpoint){
         java.net.HttpURLConnection c=null;
