@@ -291,7 +291,6 @@ public class MainActivity extends Activity {
             JSONObject result=new JSONObject(raw);return provider.equals("Ollama local")?result.getJSONObject("message").getString("content"):result.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
         }catch(Exception e){return "Erro ao analisar a tela: "+e.getMessage();}finally{if(c!=null)c.disconnect();}
     }
-    String readAll(InputStream in)throws Exception{ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[4096];int n;while((n=in.read(b))>0)out.write(b,0,n);return out.toString("UTF-8");}
     void toggleScreenContext(){
         if(ScreenCaptureService.active){startService(new Intent(this,ScreenCaptureService.class).setAction(ScreenCaptureService.ACTION_STOP));latestScreenImage=null;Toast.makeText(this,"Visão da tela pausada",Toast.LENGTH_SHORT).show();return;}
         requestScreenRead();
