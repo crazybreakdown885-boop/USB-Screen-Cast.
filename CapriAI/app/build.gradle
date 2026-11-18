@@ -2,8 +2,8 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.nightcity.capriai'
  compileSdk 35
- defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 18; versionName '0.9.9'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
+ defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 19; versionName '0.9.10'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
-// Build marker: Capri 0.9.9 contextual action library, autonomous speech, no random teleport.
+// Build marker: Capri 0.9.10 Gemini context and conversation continuity fixes.
