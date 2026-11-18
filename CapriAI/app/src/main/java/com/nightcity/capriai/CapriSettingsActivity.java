@@ -24,7 +24,8 @@ public class CapriSettingsActivity extends Activity {
         Spinner provider=new Spinner(this);provider.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,providers));
         String saved=prefs.getString("ai_provider","Offline");provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
         row("Provedor de IA",provider);
-        TextView offlineInfo=text("OFFLINE: funciona sem chave. Conversa local básica, comandos, notas e voz. IA generativa e visão completa exigem provedor externo.",11,0xffa8a5b5);offlineInfo.setPadding(0,dp(6),0,dp(8));page.addView(offlineInfo);\n        EditText model=field("Nome do modelo (ex.: gpt-4o-mini)");model.setText(prefs.getString("ai_model","gpt-4o-mini"));row("Modelo",model);
+        TextView offlineInfo=text("OFFLINE: funciona sem chave. Conversa local básica, comandos, notas e voz. IA generativa e visão completa exigem provedor externo.",11,0xffa8a5b5);offlineInfo.setPadding(0,dp(6),0,dp(8));page.addView(offlineInfo);
+        EditText model=field("Nome do modelo (ex.: gpt-4o-mini)");model.setText(prefs.getString("ai_model","gpt-4o-mini"));row("Modelo",model);
         EditText endpoint=field("API endpoint");endpoint.setText(prefs.getString("ai_endpoint","https://api.openai.com/v1"));row("Endereço da API",endpoint);
         EditText api=field("Chave da API");api.setInputType(129);api.setText(prefs.getString("api_key",""));row("Chave da API",api);
         section("VOZ");
@@ -32,7 +33,9 @@ public class CapriSettingsActivity extends Activity {
         seek("Velocidade da fala","voice_rate",50,200,94);
         seek("Tom da voz","voice_pitch",50,200,100);
         check("Ler respostas em voz alta","voice_replies",true);
-        section("PERSONAGEM");\n        check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);\n        String[] poses={"sit","lie","crouch","back"};String[] poseLabels={"Sentada","Deitada","Agachada","De costas"};Spinner pose=new Spinner(this);pose.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,poseLabels));String poseSaved=prefs.getString("character_pose","sit");int poseIndex=java.util.Arrays.asList(poses).indexOf(poseSaved);pose.setSelection(poseIndex<0?0:poseIndex);row("Pose inicial",pose);
+        section("PERSONAGEM");
+        check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
+        String[] poses={"sit","lie","crouch","back"};String[] poseLabels={"Sentada","Deitada","Agachada","De costas"};Spinner pose=new Spinner(this);pose.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,poseLabels));String poseSaved=prefs.getString("character_pose","sit");int poseIndex=java.util.Arrays.asList(poses).indexOf(poseSaved);pose.setSelection(poseIndex<0?0:poseIndex);row("Pose inicial",pose);
         seek("Tamanho da personagem","character_scale",40,180,100);
         seek("Intensidade das animações","animation_intensity",0,150,100);
         check("Efeitos de glitch","glitch_effects",true);
