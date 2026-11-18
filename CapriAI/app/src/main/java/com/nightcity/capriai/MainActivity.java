@@ -163,7 +163,7 @@ public class MainActivity extends Activity {
         new Handler().postDelayed(()->applyImmersiveMode(true),350);
         if(handleAndroidCommand(q))return;
         android.content.SharedPreferences aiPrefs=getSharedPreferences("capri_settings",0);
-        String api=aiPrefs.getString("api_key","").trim();
+        String api=ApiKeyStore.get(this).trim();
         String selectedProvider=aiPrefs.getString("ai_provider","Offline");
         if(aiPrefs.getBoolean("screen_monitor",false)&&latestScreenImage!=null){
             new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
@@ -282,7 +282,7 @@ public class MainActivity extends Activity {
     }
     void askAboutScreen(String b64){
         addMessage("SISTEMA","Captura de tela recebida. Analisando...",false);
-        String api=getSharedPreferences("capri_settings",0).getString("api_key","");
+        String api=ApiKeyStore.get(this);
         new Thread(()->{String answer=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",answer,true);speak(answer);});}).start();
     }
     String askVision(String api,String b64){return askVision(api,b64,"Leia a captura de tela e ajude o usuário.");}
