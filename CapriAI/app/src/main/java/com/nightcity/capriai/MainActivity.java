@@ -21,7 +21,7 @@ import java.util.*;
 public class MainActivity extends Activity {
     EditText prompt, key;
     Button floatBtn;
-    CapriFaceView capriFace;
+    CapriCharacterView capriFace;
     LinearLayout messages;
     ScrollView scroll;
     TextToSpeech tts;
@@ -44,20 +44,15 @@ public class MainActivity extends Activity {
         Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); floatBtn=smallButton("◉ FLUTUAR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
         read.setOnClickListener(v->requestScreenRead());
-        capriFace=new CapriFaceView(this);
-        LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(270)); faceLp.setMargins(0,0,0,8);
+        capriFace=new CapriCharacterView(this);
+        LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(300)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
         TextView tagline=label("◆ ENGRAM INTERFACE / ONLINE ◆",10,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
         scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false);
         messages=new LinearLayout(this); messages.setOrientation(1); messages.setPadding(0,8,0,8); scroll.addView(messages);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         addMessage("CAPRI","Finalmente. Achei que você tinha me deixado presa num shard velho. E aí, choom?",true);
-        LinearLayout keyPanel=new LinearLayout(this); keyPanel.setOrientation(1); keyPanel.setPadding(10,6,10,6); keyPanel.setBackground(new GradientBox(panel));
-        key=field("Chave da API OpenAI (opcional)"); key.setInputType(129); key.setText(getPreferences(0).getString("api_key","")); keyPanel.addView(key);
-        Button save=smallButton("SALVAR CHAVE"); keyPanel.addView(save);
-        save.setOnClickListener(v->{getPreferences(0).edit().putString("api_key",key.getText().toString().trim()).apply();Toast.makeText(this,"Chave salva neste aparelho",0).show();});
-        keyPanel.setVisibility(View.GONE); root.addView(keyPanel);
-        settings.setOnClickListener(v->keyPanel.setVisibility(keyPanel.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE));
+        settings.setOnClickListener(v->startActivity(new Intent(this,CapriSettingsActivity.class)));
         LinearLayout composer=new LinearLayout(this); composer.setGravity(Gravity.CENTER_VERTICAL); composer.setPadding(6,4,6,4); composer.setBackground(new GradientBox(panel));
         prompt=field("Mensagem para Capri..."); prompt.setSingleLine(true); prompt.setTypeface(Typeface.MONOSPACE); prompt.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
         composer.addView(prompt,new LinearLayout.LayoutParams(0,dp(50),1));
@@ -75,7 +70,7 @@ public class MainActivity extends Activity {
             composerFocused=focused;
             if(focused){getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);applyImmersiveMode(false);}
         });
-        tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){tts.setLanguage(new Locale("pt","BR"));tts.setSpeechRate(0.94f);}});
+        tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){tts.setLanguage(new Locale("pt","BR"));android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);tts.setSpeechRate(sp.getInt("voice_rate",94)/100f);tts.setPitch(sp.getInt("voice_pitch",100)/100f);}});
         send.setOnClickListener(v->sendMessage()); mic.setOnClickListener(v->listen());
         prompt.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEND){sendMessage();return true;}return false;});
         floatBtn.setOnClickListener(v->{
@@ -116,6 +111,9 @@ public class MainActivity extends Activity {
             startService(new Intent(this,OverlayService.class));
         }
         applyImmersiveMode(!keyboardVisible&&!composerFocused);syncOverlayButton();
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        float scale=sp.getInt("character_scale",100)/100f;
+        if(capriFace!=null){capriFace.setScaleX(scale);capriFace.setScaleY(scale);}
     }
     @Override public void onWindowFocusChanged(boolean hasFocus){
         super.onWindowFocusChanged(hasFocus);
@@ -140,7 +138,7 @@ public class MainActivity extends Activity {
         prompt.clearFocus();composerFocused=false;
         new Handler().postDelayed(()->applyImmersiveMode(true),350);
         if(handleAndroidCommand(q))return;
-        String api=getPreferences(0).getString("api_key","");
+        String api=getSharedPreferences("capri_settings",0).getString("api_key","");
         if(api.isEmpty()){String a=localReply(q);addMessage("CAPRI",a,true);speak(a);}
         else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
     }
@@ -201,7 +199,7 @@ public class MainActivity extends Activity {
         tts.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener(){
             final Handler h=new Handler();
             boolean open=false;
-            Runnable mouth=new Runnable(){public void run(){if(capriFace!=null){open=!open;capriFace.animateMouth(open);h.postDelayed(this,145);}}};
+            Runnable mouth=new Runnable(){public void run(){if(capriFace!=null){open=!open;capriFace.setSpeaking(open);h.postDelayed(this,145);}}};
             @Override public void onStart(String id){runOnUiThread(()->{overlaySpeaking(true);if(capriFace!=null)capriFace.setSpeaking(true);h.post(mouth);});}
             @Override public void onDone(String id){h.removeCallbacks(mouth);runOnUiThread(()->{overlaySpeaking(false);if(capriFace!=null)capriFace.setSpeaking(false);});}
             @Override public void onError(String id){h.removeCallbacks(mouth);runOnUiThread(()->{overlaySpeaking(false);if(capriFace!=null)capriFace.setSpeaking(false);});}
