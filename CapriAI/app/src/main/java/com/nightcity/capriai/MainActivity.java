@@ -27,26 +27,27 @@ public class MainActivity extends Activity {
     TextToSpeech tts;
     static final int SCREEN_REQUEST=8;
     BroadcastReceiver screenReceiver;
-    int pink=0xffff4fa3, green=0xffbaff45, bg=0xff090a10, panel=0xff171923;
+    int pink=0xffff315f, green=0xff00ef83, cyan=0xff35d9f5, bg=0xff05090d, panel=0xff080f17;
+    boolean keyboardVisible=false;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().setStatusBarColor(bg); getWindow().setNavigationBarColor(bg);
         if(Build.VERSION.SDK_INT>=30) getWindow().setDecorFitsSystemWindows(true);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-        applyImmersiveMode();
+        applyImmersiveMode(true);
         LinearLayout root=new LinearLayout(this); root.setOrientation(1); root.setPadding(14,8,14,8); root.setBackgroundColor(bg);
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
-        TextView brand=label("CAPRI  //  NIGHT CITY",18,Color.WHITE); brand.setTypeface(null,Typeface.BOLD);
+        TextView brand=label("CAPRI // NIGHT CITY",16,cyan); brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); floatBtn=smallButton("◉ FLUTUAR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
         read.setOnClickListener(v->requestScreenRead());
         capriFace=new CapriFaceView(this);
-        LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(184)); faceLp.setMargins(0,0,0,8);
+        LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(270)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
-        TextView tagline=label("ENGRAM INTERFACE  •  ONLINE",10,green); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
-        scroll=new ScrollView(this); scroll.setFillViewport(false);
+        TextView tagline=label("◆ ENGRAM INTERFACE / ONLINE ◆",10,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
+        scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false);
         messages=new LinearLayout(this); messages.setOrientation(1); messages.setPadding(0,8,0,8); scroll.addView(messages);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         addMessage("CAPRI","Finalmente. Achei que você tinha me deixado presa num shard velho. E aí, choom?",true);
@@ -57,12 +58,17 @@ public class MainActivity extends Activity {
         keyPanel.setVisibility(View.GONE); root.addView(keyPanel);
         settings.setOnClickListener(v->keyPanel.setVisibility(keyPanel.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE));
         LinearLayout composer=new LinearLayout(this); composer.setGravity(Gravity.CENTER_VERTICAL); composer.setPadding(6,4,6,4); composer.setBackground(new GradientBox(panel));
-        prompt=field("Mensagem para Capri..."); prompt.setSingleLine(true); prompt.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
+        prompt=field("Mensagem para Capri..."); prompt.setSingleLine(true); prompt.setTypeface(Typeface.MONOSPACE); prompt.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
         composer.addView(prompt,new LinearLayout.LayoutParams(0,dp(50),1));
         Button mic=smallButton("🎙"); Button send=smallButton("➤");
         composer.addView(mic,new LinearLayout.LayoutParams(dp(48),dp(48))); composer.addView(send,new LinearLayout.LayoutParams(dp(52),dp(48)));
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2); cp.setMargins(0,6,0,4); root.addView(composer,cp);
         setContentView(root);
+        if(Build.VERSION.SDK_INT>=30) root.setOnApplyWindowInsetsListener((v,insets)->{
+            boolean ime=insets.isVisible(android.view.WindowInsets.Type.ime());
+            if(ime!=keyboardVisible){keyboardVisible=ime;applyImmersiveMode(!ime);}
+            return insets;
+        });
         tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){tts.setLanguage(new Locale("pt","BR"));tts.setSpeechRate(0.94f);}});
         send.setOnClickListener(v->sendMessage()); mic.setOnClickListener(v->listen());
         prompt.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEND){sendMessage();return true;}return false;});
@@ -84,11 +90,8 @@ public class MainActivity extends Activity {
         screenReceiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){String b64=i.getStringExtra("image");if(b64!=null)askAboutScreen(b64);}};
         if(Build.VERSION.SDK_INT>=33)registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"),Context.RECEIVER_NOT_EXPORTED);else registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"));
     }
-    void applyImmersiveMode(){
-        int flags=View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            |View.SYSTEM_UI_FLAG_FULLSCREEN
-            |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            |View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+    void applyImmersiveMode(boolean immersive){
+        int flags=immersive?(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE):View.SYSTEM_UI_FLAG_VISIBLE;
         getWindow().getDecorView().setSystemUiVisibility(flags);
     }
     void syncOverlayButton(){
@@ -96,18 +99,19 @@ public class MainActivity extends Activity {
         boolean allowed=android.provider.Settings.canDrawOverlays(this);
         floatBtn.setText(!allowed?"◉ SOBREPOR":(OverlayService.running?"■ PARAR":"◉ SOBREPOR"));
     }
-    @Override protected void onResume(){super.onResume();applyImmersiveMode();syncOverlayButton();}
-    @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);if(hasFocus)applyImmersiveMode();}
+    @Override protected void onResume(){super.onResume();applyImmersiveMode(!keyboardVisible);syncOverlayButton();}
+    @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);if(hasFocus)applyImmersiveMode(!keyboardVisible);}
     int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
     void handleLaunchIntent(Intent i){if(i==null)return;String q=i.getStringExtra("capri_prompt");if(q!=null&&!q.trim().isEmpty()){prompt.setText(q);sendMessage();}if(i.getBooleanExtra("capri_capture_screen",false)){i.removeExtra("capri_capture_screen");requestScreenRead();}}
     @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handleLaunchIntent(i);}
+    class HudBubble extends android.graphics.drawable.GradientDrawable { HudBubble(int color,int stroke){setColor(color);setCornerRadius(12);setStroke(dp(1),stroke);} }
     class GradientBox extends android.graphics.drawable.GradientDrawable {
         GradientBox(int color){setColor(color);setCornerRadius(18);setStroke(1,0xff393445);}
     }
-    TextView label(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,3,0,3);return t;}
-    EditText field(String hint){EditText e=new EditText(this);e.setSingleLine(true);e.setHint(hint);e.setHintTextColor(0xff85899c);e.setTextColor(Color.WHITE);e.setTextSize(14);e.setPadding(12,6,12,6);e.setBackground(new GradientBox(0xff1c1f2b));return e;}
-    Button smallButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(0xff090a10);b.setTextSize(10);b.setAllCaps(false);b.setPadding(2,0,2,0);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(pink));return b;}
-    void addMessage(String who,String text,boolean capri){TextView t=label(who+"\n",14,capri?0xffffb6d5:Color.WHITE);t.setPadding(13,11,13,11);t.setBackground(new GradientBox(capri?0xff241b2b:0xff1c2630));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,5,0,7);messages.addView(t,p);if(capri){typeText(t,text,0);}else{t.append(text);}if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));}
+    TextView label(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setTypeface(Typeface.MONOSPACE);t.setPadding(0,3,0,3);return t;}
+    EditText field(String hint){EditText e=new EditText(this);e.setSingleLine(true);e.setHint(hint);e.setHintTextColor(0xff85899c);e.setTextColor(Color.WHITE);e.setTextSize(14);e.setTypeface(Typeface.MONOSPACE);e.setPadding(12,6,12,6);e.setBackground(new GradientBox(0xff1c1f2b));return e;}
+    Button smallButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(0xff090a10);b.setTextSize(9);b.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);b.setAllCaps(false);b.setPadding(2,0,2,0);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(pink));return b;}
+    void addMessage(String who,String text,boolean capri){TextView t=label(who+"\n",14,capri?0xffffb6d5:Color.WHITE);t.setPadding(13,11,13,11);t.setTypeface(Typeface.MONOSPACE);t.setBackground(new HudBubble(capri?0xff08131c:0xff101018,capri?cyan:pink));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,5,0,7);messages.addView(t,p);if(capri){typeText(t,text,0);}else{t.append(text);}if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));}
     void typeText(TextView view,String value,int index){if(index>=value.length())return;char ch=value.charAt(index);view.append(String.valueOf(ch));if(ch!=' '&&ch!='\n'&&index%2==0)view.playSoundEffect(android.view.SoundEffectConstants.CLICK);if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));new Handler().postDelayed(()->typeText(view,value,index+1),28);}
     void sendMessage(){String q=prompt.getText().toString().trim();if(q.isEmpty())return;prompt.setText("");addMessage("VOCÊ",q,false);((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(prompt.getWindowToken(),0);String api=getPreferences(0).getString("api_key","");if(api.isEmpty()){String a=localReply(q);addMessage("CAPRI",a,true);speak(a);}else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();}
     String localReply(String q){String s=q.toLowerCase(Locale.ROOT);if(s.contains("quem")||s.contains("capri"))return "Capri. Engram do Projeto Capricorn. Não sou exatamente uma garota comum, choom. Sou um monte de dados perigosamente interessantes com uma péssima paciência para corporações.";if(s.contains("oi")||s.contains("olá")||s.contains("eai"))return "E aí, choom! Já estava ficando entediada no ciberespaço. Manda a boa.";return "Minha conexão neural está no modo local. Configure sua chave de API para conversas completas, choom.";}
