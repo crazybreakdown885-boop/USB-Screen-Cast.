@@ -136,6 +136,7 @@ public class MainActivity extends Activity {
         capriFace.animate().cancel();
         float base=getSharedPreferences("capri_settings",0).getInt("character_scale",100)/100f;
         int act=idleMotionRandom.nextInt(6);
+        capriFace.setFaceOnly(false);
         String[] poses={"sit","lie","crouch","back"};
         switch(act){
             case 0: capriFace.setPose("back");capriFace.animate().translationY(-dp(22)).translationX(dp(24)).rotation(-7f).scaleX(base*1.05f).scaleY(base*.94f).setDuration(850).start();break;
@@ -145,7 +146,7 @@ public class MainActivity extends Activity {
             case 4: capriFace.setPose("sit");capriFace.animate().translationY(dp(45)).translationX(dp(8)).scaleX(base*.98f).scaleY(base*.98f).setDuration(650).start();break;
             default: capriFace.setPose(poses[idleMotionRandom.nextInt(poses.length)]);capriFace.animate().translationY(-dp(48)).setDuration(250).withEndAction(()->capriFace.animate().translationY(0).setDuration(250).withEndAction(()->capriFace.animate().translationY(-dp(32)).setDuration(220).withEndAction(()->capriFace.animate().translationY(0).setDuration(220).start()).start()).start()).start();break;
         }
-        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(600).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));}},4300);
+        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(600).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));capriFace.setFaceOnly(getSharedPreferences("capri_settings",0).getBoolean("face_only",false));}},4300);
     }
     @Override protected void onPause(){idleMotionHandler.removeCallbacks(idleMotion);super.onPause();}
     @Override protected void onResume(){
