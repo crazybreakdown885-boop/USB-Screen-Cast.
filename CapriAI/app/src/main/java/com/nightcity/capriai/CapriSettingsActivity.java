@@ -58,9 +58,7 @@ public class CapriSettingsActivity extends Activity {
         check("Ler respostas em voz alta","voice_replies",true);
         section("PERSONAGEM");
         check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
-        check("Capri se movimenta livremente pela tela","free_roam",true);
-        check("Usar teleporte com efeito visual","teleport_enabled",true);
-        check("Mudar pose e forma automaticamente","auto_morph",true);
+        check("Animações corporais contextuais (sem teleporte aleatório)","idle_activities",true);
         String[] poses={"sit","lie","crouch","back"};String[] poseLabels={"Sentada","Deitada","Agachada","De costas"};Spinner pose=new Spinner(this);pose.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,poseLabels));String poseSaved=prefs.getString("character_pose","sit");int poseIndex=java.util.Arrays.asList(poses).indexOf(poseSaved);pose.setSelection(poseIndex<0?0:poseIndex);row("Pose inicial",pose);
         seek("Tamanho da personagem","character_scale",40,180,100);
         seek("Intensidade das animações","animation_intensity",0,150,100);
@@ -68,8 +66,8 @@ public class CapriSettingsActivity extends Activity {
         check("Personagem sempre visível / sobreposição","always_on_top",true);
         check("Iniciar sobreposição automaticamente","overlay_enabled",false);
         section("COMPORTAMENTO");
-        check("Comentários espontâneos (balão silencioso)","idle_remarks",false);
-        check("Atividades automáticas (dançar com música, minigame, pular, deitar e sentar no balão)","idle_activities",true);
+        check("Capri pode iniciar conversas e falar sozinha quando estiver em silêncio","autonomous_speech",true);
+        TextView autonomyInfo=text("Ela espera um período sem interação antes de falar. Respeita Não Perturbe e o horário silencioso. Se houver um provedor online configurado, usa o histórico recente para criar uma fala; sem internet, usa o repertório local.",11,0xffa8a5b5);autonomyInfo.setPadding(0,dp(4),0,dp(8));page.addView(autonomyInfo);
         check("Não perturbe","do_not_disturb",false);
         check("Horário silencioso (22:00–08:00)","quiet_hours",true);
         check("Ocultar personagem ao digitar","hide_while_typing",false);
