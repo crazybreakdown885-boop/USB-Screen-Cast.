@@ -48,10 +48,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.5"
+          TAG="capri-v0.9.6"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.5" --notes "Capri 0.9.5: personalidade feminina mais fiel e consistente em português brasileiro, animações espontâneas de descanso, jogo, assobio e música, personagem que senta sobre o balão de diálogo, movimento livre e teleporte. Mantém voz PT-BR e diálogos offline procedurais."
+            gh release edit "$TAG" --title "Capri AI Android 0.9.6" --notes "Capri 0.9.6: conexão OpenAI com chave de API, atalho para criar/obter chave, teste de conexão, armazenamento criptografado com Android Keystore e uso da chave em chat e visão. Mantém personalidade feminina, voz PT-BR, animações espontâneas e diálogos offline."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.5" --notes "Capri 0.9.5: personalidade feminina mais fiel e consistente em português brasileiro, animações espontâneas de descanso, jogo, assobio e música, personagem que senta sobre o balão de diálogo, movimento livre e teleporte. Mantém voz PT-BR e diálogos offline procedurais. APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.6" --notes "Capri 0.9.6: conexão OpenAI com chave de API, atalho para criar/obter chave, teste de conexão, armazenamento criptografado com Android Keystore e uso da chave em chat e visão. Mantém personalidade feminina, voz PT-BR, animações espontâneas e diálogos offline. APK debug ARMv7/ARM64."
           fi
