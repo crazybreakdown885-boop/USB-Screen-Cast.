@@ -8,5 +8,6 @@ android {
 dependencies {
  implementation fileTree(dir: 'libs', include: ['*.aar'])
  implementation 'org.apache.commons:commons-compress:1.27.1'
+ implementation 'org.jetbrains.kotlin:kotlin-stdlib:2.2.20'
 }
 // Capri 1.0.0: matrix terminal, offline PT-BR voice, accessibility, outfits and choreography.
