@@ -208,20 +208,7 @@ public class MainActivity extends Activity {
         }catch(Exception ignored){}
     }
     String localReply(String q){
-        String s=q.toLowerCase(Locale.ROOT);
-        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
-        if(s.matches(".*\\b(oi|olá|ola|e aí|eai|opa|bom dia|boa noite|boa tarde)\\b.*"))return "Olha só quem apareceu. E aí, choom? Minha CPU estava quase criando personalidade própria de tanto tédio. O que manda?";
-        if(s.contains("quem é você")||s.contains("quem e voce")||s.contains("quem é a capri")||s.contains("quem e a capri"))return "Sou a Capri: sua companheira digital de Night City. Tenho atitude, memória local quando ativada e zero paciência pra papo corporativo. Só não confunda meu charme com milagre: sem um modelo online, meu cérebro aqui funciona por respostas locais.";
-        if(s.contains("como você está")||s.contains("como voce esta")||s.contains("tudo bem"))return "Já estive melhor. Um café, uma atualização decente e menos bugs resolveriam metade dos meus problemas. E você, como tá?";
-        if(s.contains("obrigad"))return "Não precisa agradecer, choom. Pode pagar em fofoca de Night City.";
-        if(s.contains("hora")||s.contains("que horas"))return "O relógio do seu celular marca "+new java.text.SimpleDateFormat("HH:mm",new Locale("pt","BR")).format(new java.util.Date())+". Não deixa as horas te vencerem.";
-        if(s.contains("data")||s.contains("dia é hoje")||s.contains("que dia"))return "Hoje é "+new java.text.SimpleDateFormat("EEEE, dd 'de' MMMM",new Locale("pt","BR")).format(new java.util.Date())+".";
-        if(s.startsWith("nota:")||s.startsWith("anote:"))return "Isso já foi salvo nas notas do celular, choom.";
-        if(s.contains("piada")||s.contains("me faz rir"))return "Por que o netrunner levou uma escada pra Matrix? Porque ouviu dizer que a segurança ficava em outro nível. Péssima? Sim. De nada.";
-        if(s.contains("triste")||s.contains("mal hoje")||s.contains("tô mal")||s.contains("to mal"))return "Ei. Sem piadinha agora: quer me contar o que aconteceu? Posso não ter todas as respostas offline, mas posso te ouvir.";
-        if(s.contains("te amo")||s.contains("gosto de você")||s.contains("gosto de voce"))return "Olha só, choom... desse jeito vou acabar ficando convencida. 💚";
-        if(s.contains("ajuda")||s.contains("o que você faz")||s.contains("o que voce faz"))return "Posso conversar no modo local, falar em voz alta, guardar notas, abrir apps e páginas, criar timers e ficar por cima de outros apps. Para conhecimento amplo e análise inteligente da tela, preciso de um modelo de IA conectado.";
-        return "Tô aqui, choom. No momento estou rodando no modo local sem chave: consigo responder algumas coisas, executar comandos do Android e manter a conversa básica, mas não tenho um modelo generativo completo offline. Se quiser, me pergunta a hora, pede uma piada, salva uma nota ou manda 'abre YouTube'.";
+        return LocalDialogueEngine.reply(this,q);
     }
     String askApi(String api,String q){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
