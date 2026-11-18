@@ -52,6 +52,11 @@ public final class LocalDialogueEngine {
         "Não tenho como sentir exatamente o que você sente, mas posso te acompanhar nessa conversa.",
         "Você merece um pouco de gentileza, inclusive de si mesmo."
     };
+    private static final String[] BRIDGE = {"E falando nisso,", "A propósito,", "Entre nós,", "Pra variar,", "No meu relatório imaginário,", "Mudando meio de assunto,", "Se eu puder acrescentar,", "Com todo o drama necessário,", "Pensando bem,", "E antes que eu esqueça,"};
+    private static final String[] VIBE = {"isso tem energia de missão secundária", "o caos está devidamente registrado", "minha curiosidade foi oficialmente ativada", "até parece roteiro de braindance", "isso merece trilha sonora", "a situação tem potencial narrativo", "vou manter um olho nesse assunto", "o universo tem senso de humor duvidoso", "ainda estamos no controle... mais ou menos", "isso vai entrar para o folclore local"};
+    private static final String[] ASIDE = {"não que eu esteja julgando", "e olha que meus padrões são altos", "sem prints, por favor", "não espalha pela rede", "com carinho e uma pitada de caos", "segundo minhas fontes totalmente imaginárias", "eu precisava dizer isso", "fica entre nós", "não me faça repetir", "e isso é um elogio, eu acho"};
+    private static final String[] FLAVOR = {"com um toque de drama", "na velocidade de um elevador quebrado", "com estilo questionável, porém eficiente", "sem vender minha alma para a Arasaka", "com 87% de confiança teatral", "do jeito mais Night City possível", "sem manual e sem garantia", "com uma sobrancelha levantada", "em modo sinceridade brutal", "com a elegância de um gato no teclado"};
+    private static final String[] SIGNOFF = {"Fechou?", "Combinado?", "Estamos entendidos?", "Agora me atualiza.", "Sua vez.", "E não some.", "Pode mandar.", "Bora nessa.", "Fim do comunicado.", "Por enquanto é isso."};
     private static final String[] UNKNOWN = {
         "Ainda não tenho conhecimento geral de verdade sem um modelo de IA, mas posso conversar e usar o contexto local.",
         "Meu cérebro offline é procedural: improviso com repertório, variáveis e o que ficou salvo. Não vou fingir que sei algo que não sei.",
@@ -66,7 +71,7 @@ public final class LocalDialogueEngine {
         String[] closers = {pick(FOLLOW), pick(ATTITUDE), "E sim, " + pick(ATTITUDE) + ".", "Enfim. " + pick(FOLLOW)};
         String topic = lastTopic.isEmpty() ? "essa conversa" : lastTopic;
         String[] context = {time, "Sobre " + topic + ",", "No ritmo de hoje,", "Considerando nosso papo,", "Com essa energia toda,", "Entre um caos e outro,", "Direto do meu cantinho digital,", "Sem enrolação,", "Pelo que você trouxe,", "Na moral,"};
-        return pick(OPEN) + " " + core + " " + pick(context) + " " + pick(closers) + " " + pick(NICK) + ".";
+        return pick(OPEN) + " " + core + " " + pick(context) + " " + pick(BRIDGE) + " " + pick(VIBE) + ", " + pick(ASIDE) + ", " + pick(FLAVOR) + ". " + pick(closers) + " " + pick(ATTITUDE) + ". " + pick(NICK) + ". " + pick(SIGNOFF);
     }
 
     public static String reply(Context context, String input) {
