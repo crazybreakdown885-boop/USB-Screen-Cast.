@@ -20,6 +20,7 @@ import java.util.*;
 
 public class MainActivity extends Activity {
     EditText prompt, key;
+    Button floatBtn;
     CapriFaceView capriFace;
     LinearLayout messages;
     ScrollView scroll;
@@ -31,13 +32,14 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().setStatusBarColor(bg); getWindow().setNavigationBarColor(bg);
-        getWindow().getDecorView().setSystemUiVisibility(0);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        if(Build.VERSION.SDK_INT>=30) getWindow().setDecorFitsSystemWindows(true);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        applyImmersiveMode();
         LinearLayout root=new LinearLayout(this); root.setOrientation(1); root.setPadding(14,8,14,8); root.setBackgroundColor(bg);
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
         TextView brand=label("CAPRI  //  NIGHT CITY",18,Color.WHITE); brand.setTypeface(null,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); Button floatBtn=smallButton("◉ FLUTUAR");
+        Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); floatBtn=smallButton("◉ FLUTUAR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
         read.setOnClickListener(v->requestScreenRead());
         capriFace=new CapriFaceView(this);
@@ -64,11 +66,38 @@ public class MainActivity extends Activity {
         tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){tts.setLanguage(new Locale("pt","BR"));tts.setSpeechRate(0.94f);}});
         send.setOnClickListener(v->sendMessage()); mic.setOnClickListener(v->listen());
         prompt.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEND){sendMessage();return true;}return false;});
-        floatBtn.setOnClickListener(v->{if(android.provider.Settings.canDrawOverlays(this)){startService(new Intent(this,OverlayService.class));Toast.makeText(this,"Atalho flutuante ativado",0).show();}else{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,android.net.Uri.parse("package:"+getPackageName())));}});
+        floatBtn.setOnClickListener(v->{
+            if(!android.provider.Settings.canDrawOverlays(this)){
+                startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,android.net.Uri.parse("package:"+getPackageName())));
+            } else if(OverlayService.running){
+                stopService(new Intent(this,OverlayService.class));
+                syncOverlayButton();
+                Toast.makeText(this,"Sobreposição desativada",Toast.LENGTH_SHORT).show();
+            } else {
+                startService(new Intent(this,OverlayService.class));
+                syncOverlayButton();
+                Toast.makeText(this,"Capri flutuante ativada",Toast.LENGTH_SHORT).show();
+            }
+        });
+        syncOverlayButton();
         handleLaunchIntent(getIntent());
         screenReceiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){String b64=i.getStringExtra("image");if(b64!=null)askAboutScreen(b64);}};
         if(Build.VERSION.SDK_INT>=33)registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"),Context.RECEIVER_NOT_EXPORTED);else registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"));
     }
+    void applyImmersiveMode(){
+        int flags=View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            |View.SYSTEM_UI_FLAG_FULLSCREEN
+            |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            |View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        getWindow().getDecorView().setSystemUiVisibility(flags);
+    }
+    void syncOverlayButton(){
+        if(floatBtn==null)return;
+        boolean allowed=android.provider.Settings.canDrawOverlays(this);
+        floatBtn.setText(!allowed?"◉ SOBREPOR":(OverlayService.running?"■ PARAR":"◉ SOBREPOR"));
+    }
+    @Override protected void onResume(){super.onResume();applyImmersiveMode();syncOverlayButton();}
+    @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);if(hasFocus)applyImmersiveMode();}
     int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
     void handleLaunchIntent(Intent i){if(i==null)return;String q=i.getStringExtra("capri_prompt");if(q!=null&&!q.trim().isEmpty()){prompt.setText(q);sendMessage();}if(i.getBooleanExtra("capri_capture_screen",false)){i.removeExtra("capri_capture_screen");requestScreenRead();}}
     @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handleLaunchIntent(i);}
