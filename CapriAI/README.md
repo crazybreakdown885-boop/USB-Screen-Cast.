@@ -45,3 +45,14 @@ gradle assembleDebug
 ```
 
 O workflow `.github/workflows/capri-ai-android.yml` gera o APK debug para ARMv7 e ARM64.
+
+
+## Versão 0.9.0
+
+- Inicialização padrão no modo Offline, sem exigir chave de API.
+- O modo Offline oferece respostas locais básicas e comandos Android; não equivale a um modelo generativo completo.
+- Sobreposição reposicionável por arraste, com posição salva entre sessões.
+- Toque na personagem sobreposta alterna entre corpo completo e modo rosto minimalista com faixa serrilhada, olhos e boca.
+- Poses disponíveis nas configurações: sentada, deitada, agachada e de costas.
+- Ícone do aplicativo usa o retrato da Capri.
+- Interface segue o estilo de terminal neon da personagem.
