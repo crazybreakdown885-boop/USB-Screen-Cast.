@@ -123,28 +123,30 @@ public class MainActivity extends Activity {
         capriFace.setFaceOnly(false);capriFace.setPose(action.pose);capriFace.setMood(action.mood);
         long d=action.duration;
         switch(action.kind){
-            case "stretch":capriFace.animate().translationY(-dp(22)).scaleX(base*1.04f).scaleY(base*.96f).rotation(-3f).setDuration(d).start();break;
+            case "teleport":
+                capriFace.animate().alpha(0f).scaleX(base*.82f).scaleY(base*.82f).setDuration(130).withEndAction(()->{
+                    if(capriFace==null)return;
+                    float direction=idleMotionRandom.nextBoolean()?1f:-1f;
+                    capriFace.setTranslationX(direction*Math.max(dp(34),capriFace.getWidth()*.22f));
+                    capriFace.animate().alpha(1f).translationX(0f).scaleX(base).scaleY(base).setDuration(230).start();
+                }).start();break;
+            case "stretch":capriFace.animate().translationY(-dp(18)).scaleX(base*1.035f).scaleY(base*.965f).setDuration(d).start();break;
             case "look":case "read":case "lean":case "listen":case "think":case "lookup":
-                capriFace.animate().translationY(-dp(8)).translationX(dp(7)).rotation(-4f).setDuration(d).start();break;
-            case "hair":case "wave":capriFace.animate().rotation(5f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).setDuration(d/2).start()).start();break;
-            case "yawn":case "rest":capriFace.animate().translationY(dp(10)).scaleY(base*.97f).rotation(2f).setDuration(d).start();break;
-            case "smile":case "giggle":case "nod":
-                capriFace.animate().translationY(-dp(8)).rotation(-2f).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).rotation(0).setDuration(d/2).start()).start();break;
+                capriFace.animate().translationY(-dp(7)).translationX(dp(6)).setDuration(d).start();break;
+            case "hair":case "wave":
+                capriFace.animate().translationY(-dp(4)).scaleX(base*1.025f).setDuration(d/2).withEndAction(()->capriFace.animate().scaleX(base).setDuration(d/2).start()).start();break;
+            case "yawn":case "rest":capriFace.animate().translationY(dp(8)).scaleY(base*.97f).setDuration(d).start();break;
+            case "smile":case "giggle":case "nod":case "bounce":
+                capriFace.animate().translationY(-dp(8)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
             case "shrug":case "fidget":
-                capriFace.animate().rotation(4f).translationX(dp(4)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-3f).translationX(-dp(3)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).translationX(0f).setDuration(d/3).start()).start()).start();break;
-            case "crouch":capriFace.animate().translationY(dp(10)).scaleY(base*.94f).setDuration(d).start();break;
-            case "dance":capriFace.animate().rotation(7f).translationY(-dp(9)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-7f).translationY(0).setDuration(d/2).start()).start();break;
-            case "twirl":capriFace.animate().rotationBy(360f).setDuration(d+500).start();break;
-            case "bounce":capriFace.animate().translationY(-dp(18)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
-            case "curtsy":capriFace.animate().translationY(dp(12)).scaleY(base*.92f).rotation(3f).setDuration(d).start();break;
-            case "peek":capriFace.animate().translationX(-dp(12)).rotation(-6f).setDuration(d/2).withEndAction(()->capriFace.animate().translationX(0).rotation(0).setDuration(d/2).start()).start();break;
-            case "sway":
-                android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-                if(audio!=null&&audio.isMusicActive())capriFace.animate().rotation(7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).setDuration(d/3).start()).start()).start();
-                else capriFace.animate().translationY(-dp(4)).setDuration(d).start();break;
-            default:capriFace.animate().translationY(-dp(5)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
+                capriFace.animate().translationX(dp(4)).setDuration(d/2).withEndAction(()->capriFace.animate().translationX(-dp(3)).setDuration(d/2).withEndAction(()->capriFace.animate().translationX(0).setDuration(d/3).start()).start()).start();break;
+            case "crouch":capriFace.animate().translationY(dp(9)).scaleY(base*.94f).setDuration(d).start();break;
+            case "dance":capriFace.animate().translationY(-dp(8)).scaleX(base*1.04f).scaleY(base*.96f).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).scaleX(base).scaleY(base).setDuration(d/2).start()).start();break;
+            case "curtsy":capriFace.animate().translationY(dp(10)).scaleY(base*.93f).setDuration(d).start();break;
+            case "peek":capriFace.animate().translationX(-dp(10)).setDuration(d/2).withEndAction(()->capriFace.animate().translationX(0).setDuration(d/2).start()).start();break;
+            default:capriFace.animate().translationY(-dp(4)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
         }
-        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(450).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));capriFace.setFaceOnly(getSharedPreferences("capri_settings",0).getBoolean("face_only",false));}},d+350);
+        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).alpha(1f).scaleX(base).scaleY(base).setDuration(350).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));capriFace.setFaceOnly(getSharedPreferences("capri_settings",0).getBoolean("face_only",false));}},d+350);
     }
     @Override protected void onPause(){idleMotionHandler.removeCallbacks(idleMotion);super.onPause();}
     @Override protected void onResume(){
