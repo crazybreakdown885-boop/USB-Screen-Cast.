@@ -48,10 +48,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.11"
+          TAG="capri-v0.9.12"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.11" --notes "Capri 0.9.11: central de minijogos offline (reflexo, memória e jogo da velha), painel de controles Android com ações confirmadas pelo usuário, e fala neural Gemini TTS configurável em português brasileiro. A voz neural exige provedor Google Gemini e chave válida; a voz padrão do aparelho não é usada. Build de desenvolvimento; APK debug ARMv7/ARM64."
+            gh release edit "$TAG" --title "Capri AI Android 0.9.12" --notes "Capri 0.9.11: central de minijogos offline (reflexo, memória e jogo da velha), painel de controles Android com ações confirmadas pelo usuário, e fala neural Gemini TTS configurável em português brasileiro. A voz neural exige provedor Google Gemini e chave válida; a voz padrão do aparelho não é usada. Build de desenvolvimento; APK debug ARMv7/ARM64."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.11" --notes "Capri 0.9.10: correção da continuidade de conversa no Google Gemini com histórico recente e instruções de personalidade separadas via systemInstruction. Build de desenvolvimento; APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.11" --notes "Capri 0.9.12: novo Estúdio da Capri com paletas de cores, opções visuais de roupa, galeria de expressões e poses animadas; ícone do aplicativo redesenhado como o olho da Capri sem moldura branca. Dessa (Block) ainda não possui API pública ou pesos para integração; a voz Gemini TTS permanece como opção funcional. Build de desenvolvimento; APK debug ARMv7/ARM64."
           fi
