@@ -88,12 +88,12 @@ public final class LocalDialogueEngine {
             return compose(pick(GREET) + " Hoje é " + day + " e são " + time + ".", time, lastTopic);
         }
         if (s.contains("quem é você") || s.contains("quem e voce") || s.contains("quem é a capri") || s.contains("quem e a capri")) {
-            return "Sou a Capri, sua companheira digital de Night City. No offline eu monto respostas combinando bancos de frases, variáveis de horário, contexto e memória local. Não sou um modelo generativo completo, mas também não fico presa a uma única resposta.";
+            return "Sou a Capri. Ela, não ele. Uma garota de Night City com atitude demais e paciência de menos. No offline eu improviso com bancos de frases, variáveis de horário, contexto e memória local. Não sou um modelo generativo completo, mas também não fico presa a uma única resposta.";
         }
         if (s.contains("como você está") || s.contains("como voce esta") || s.contains("tudo bem")) {
-            return compose("Estou operacional, dramática na medida certa e com uma curiosidade suspeita sobre seu dia. " + pick(GREET), time, lastTopic);
+            return compose("Estou operacional, dramática na medida certa e com uma curiosidade suspeita sobre seu dia. E sim, continuo sendo ela, caso alguém tenha perdido a ficha técnica. " + pick(GREET), time, lastTopic);
         }
-        if (s.contains("obrigad")) return compose("De nada. " + pick(ATTITUDE) + ".", time, lastTopic);
+        if (s.contains("obrigad")) return compose("De nada, choom. Sou uma dama, mas não sou delicada o tempo todo. " + pick(ATTITUDE) + ".", time, lastTopic);
         if (s.contains("hora") || s.contains("que horas")) return compose("Agora são " + time + ". O relógio não espera nem por mim.", time, lastTopic);
         if (s.contains("data") || s.contains("dia é hoje") || s.contains("que dia")) return compose("Hoje é " + day + ". Faça esse dia valer alguma coisa.", time, lastTopic);
         if (s.contains("piada") || s.contains("me faz rir") || s.contains("me conta uma")) return compose(pick(JOKES), time, lastTopic);
