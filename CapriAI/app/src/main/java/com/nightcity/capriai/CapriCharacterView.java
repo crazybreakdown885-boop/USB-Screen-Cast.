@@ -10,6 +10,7 @@ import java.io.*;
 public class CapriCharacterView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private JSONObject model;
+    private Bitmap customArt;
     private String pose="sit";
     private String mood="neutra";
     private boolean speaking=false, blink=false, faceOnly=false;
@@ -24,6 +25,12 @@ public class CapriCharacterView extends View {
             byte[] b=new byte[8192];int n;while((n=in.read(b))>0)out.write(b,0,n);
             model=new JSONObject(out.toString("UTF-8"));
         }catch(Exception ignored){model=null;}
+        reloadCharacterImage();
+    }
+    public void reloadCharacterImage(){
+        customArt=null;
+        try{String saved=getContext().getSharedPreferences("capri_settings",0).getString("character_image_uri","");if(saved!=null&&!saved.isEmpty()){try(InputStream art=getContext().getContentResolver().openInputStream(android.net.Uri.parse(saved))){customArt=BitmapFactory.decodeStream(art);}}}catch(Exception ignored){customArt=null;}
+        invalidate();
     }
     public void setSpeaking(boolean value){speaking=value;invalidate();}
     public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
@@ -35,6 +42,7 @@ public class CapriCharacterView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        if(customArt!=null&&!faceOnly){float t=(SystemClock.uptimeMillis()-start)/1000f;float bob=(float)Math.sin(t*1.6f)*(speaking?2.4f:1.2f)*d;float scale=Math.min(w/customArt.getWidth(),h/customArt.getHeight())*.94f;float dw=customArt.getWidth()*scale,dh=customArt.getHeight()*scale;paint.setAlpha(255);c.drawBitmap(customArt,null,new RectF((w-dw)/2f,(h-dh)/2f+bob,(w+dw)/2f,(h+dh)/2f+bob),paint);postInvalidateDelayed(speaking?55:120);return;}
         if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}
         if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
         try{
