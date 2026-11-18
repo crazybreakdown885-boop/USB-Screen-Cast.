@@ -1,12 +1,18 @@
 name: Capri AI Android APK
+
 on:
   push:
+    branches: [ "main" ]
+    tags: [ "capri-v*" ]
     paths:
       - 'CapriAI/**'
       - '.github/workflows/capri-ai-android.yml'
+      - 'README.md'
   workflow_dispatch:
+
 permissions:
-  contents: read
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,12 +28,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build APK for ARMv7 and ARM64
+      - name: Build Capri AI APK
         working-directory: CapriAI
-        run: gradle assembleDebug
-      - name: Upload APK
+        run: gradle --no-daemon assembleDebug
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Capri-AI-Android-debug
           path: CapriAI/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 90
+      - name: Publish Capri release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/capri-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
+          TAG="capri-v0.8.0"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Capri AI Android 0.8.0" --notes "Capri AI para Android 0.8.0. APK debug ARMv7/ARM64."
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.8.0" --notes "Capri AI para Android 0.8.0. APK debug ARMv7/ARM64."
+          fi
+          if gh release view "V0.1.0" >/dev/null 2>&1; then
+            gh release delete "V0.1.0" --yes
+          fi
