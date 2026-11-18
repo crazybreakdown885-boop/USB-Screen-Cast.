@@ -69,7 +69,7 @@ public class CapriSettingsActivity extends Activity {
         check("Iniciar sobreposição automaticamente","overlay_enabled",false);
         section("COMPORTAMENTO");
         check("Comentários espontâneos (balão silencioso)","idle_remarks",false);
-        check("Animações e atividades espontâneas (assobiar, jogar, ouvir música, sentar no diálogo)","idle_activities",true);
+        check("Atividades automáticas (dançar com música, minigame, pular, deitar e sentar no balão)","idle_activities",true);
         check("Não perturbe","do_not_disturb",false);
         check("Horário silencioso (22:00–08:00)","quiet_hours",true);
         check("Ocultar personagem ao digitar","hide_while_typing",false);
