@@ -399,6 +399,7 @@ public class MainActivity extends Activity {
             c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("x-goog-api-key",api);
             JSONObject annotation=new JSONObject().put("type","speech_metadata").put("style","Natural Brazilian Portuguese. Feminine adult voice, youthful and lively, clear articulation, slightly husky warmth, playful confidence, subtle sarcasm when appropriate, expressive emotional changes and conversational pacing. Do not imitate or impersonate any real voice actor.");
             JSONObject part=new JSONObject().put("type","text").put("text",text.length()>4000?text.substring(0,4000):text).put("annotations",new JSONArray().put(annotation));
+            String customVoice=spVoiceId();if(!customVoice.isEmpty())voice=customVoice;
             JSONObject body=new JSONObject().put("model","gemini-3.8-flash-tts").put("input",new JSONArray().put(new JSONObject().put("type","user_input").put("content",new JSONArray().put(part)))).put("response_format",new JSONObject().put("type","audio")).put("generation_config",new JSONObject().put("speech_config",new JSONArray().put(new JSONObject().put("voice",voice))));
             try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
             int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
@@ -411,6 +412,7 @@ public class MainActivity extends Activity {
             return Base64.decode(encoded,Base64.DEFAULT);
         }finally{if(c!=null)c.disconnect();}
     }
+    String spVoiceId(){return getSharedPreferences("capri_settings",0).getString("custom_voice_id","").trim();}
     void playGeminiSpeech(File wav){
         try{
             if(cloudPlayer!=null){try{cloudPlayer.stop();}catch(Exception ignored){}cloudPlayer.release();}
