@@ -28,7 +28,7 @@ public class OverlayService extends Service {
     @Override public void onCreate(){
         super.onCreate();running=true;wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         window=new FrameLayout(this);window.setClipChildren(false);window.setClipToPadding(false);
-        character=new CapriCharacterView(this);
+        character=new CapriCharacterView(this);\n        android.content.SharedPreferences saved=getSharedPreferences("capri_settings",0);\n        character.setFaceOnly(saved.getBoolean("face_only",false));\n        character.setPose(saved.getString("character_pose","sit"));
         FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,dp(245),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
         window.addView(character,cp);
         bubble=new TextView(this);bubble.setTextColor(0xffd5efff);bubble.setTextSize(11);
@@ -38,12 +38,12 @@ public class OverlayService extends Service {
         GradientDrawable bd=new GradientDrawable();bd.setColor(0xf20a0b12);bd.setCornerRadius(dp(7));bd.setStroke(dp(2),0xff28dff4);
         bubble.setBackground(bd);bubble.setText("CAPRI: E aí, choom? Tô aqui.");
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-1,dp(86),Gravity.TOP);
-        window.addView(bubble,bp);
+        window.addView(bubble,bp);\n        bubble.setOnClickListener(v->{Intent a=new Intent(OverlayService.this,MainActivity.class);a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(a);});
         int type=WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         params=new WindowManager.LayoutParams(dp(205),dp(335),type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT);
-        params.gravity=Gravity.TOP|Gravity.START;params.x=dp(8);params.y=dp(115);
+        params.gravity=Gravity.TOP|Gravity.START;params.x=saved.getInt("overlay_x",dp(8));params.y=saved.getInt("overlay_y",dp(115));
         window.setOnTouchListener(new View.OnTouchListener(){
             float downX,downY;int sx,sy;boolean moved;
             public boolean onTouch(View v,MotionEvent e){
@@ -52,10 +52,10 @@ public class OverlayService extends Service {
                     case MotionEvent.ACTION_MOVE:
                         int dx=(int)(e.getRawX()-downX),dy=(int)(e.getRawY()-downY);
                         if(Math.abs(dx)>dp(5)||Math.abs(dy)>dp(5))moved=true;
-                        if(moved){params.x=sx+dx;params.y=sy+dy;clampPosition();try{wm.updateViewLayout(window,params);}catch(Exception ignored){}}
+                        if(moved){params.x=sx+dx;params.y=sy+dy;clampPosition();getSharedPreferences("capri_settings",0).edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();try{wm.updateViewLayout(window,params);}catch(Exception ignored){}}
                         return true;
                     case MotionEvent.ACTION_UP:
-                        if(!moved){Intent a=new Intent(OverlayService.this,MainActivity.class);a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(a);}
+                        if(!moved){boolean compact=!getSharedPreferences("capri_settings",0).getBoolean("face_only",false);getSharedPreferences("capri_settings",0).edit().putBoolean("face_only",compact).apply();character.setFaceOnly(compact);Toast.makeText(OverlayService.this,compact?"Modo rosto ativado":"Personagem completa ativada",Toast.LENGTH_SHORT).show();}
                         return true;
                 }return true;
             }
