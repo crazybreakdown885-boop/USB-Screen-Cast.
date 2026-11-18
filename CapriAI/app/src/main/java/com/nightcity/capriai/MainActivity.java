@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
         applyImmersiveMode(!keyboardVisible&&!composerFocused);syncOverlayButton();
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
         float scale=sp.getInt("character_scale",100)/100f;
-        if(capriFace!=null){capriFace.setScaleX(scale);capriFace.setScaleY(scale);capriFace.setFaceOnly(sp.getBoolean("face_only",false));capriFace.setPose(sp.getString("character_pose","sit"));}
+        if(capriFace!=null){capriFace.reloadCharacterImage();capriFace.setScaleX(scale);capriFace.setScaleY(scale);capriFace.setFaceOnly(sp.getBoolean("face_only",false));capriFace.setPose(sp.getString("character_pose","sit"));}
     }
     @Override public void onWindowFocusChanged(boolean hasFocus){
         super.onWindowFocusChanged(hasFocus);
