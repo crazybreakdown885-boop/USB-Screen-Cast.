@@ -212,20 +212,20 @@ public class MainActivity extends Activity {
                 String note=q.substring(q.indexOf(':')+1).trim();if(note.isEmpty())return false;
                 java.util.Set<String> notes=new java.util.HashSet<>(getSharedPreferences("capri_settings",0).getStringSet("capri_notes",new java.util.HashSet<>()));
                 notes.add(note);getSharedPreferences("capri_settings",0).edit().putStringSet("capri_notes",notes).apply();
-                String a="Anotado no seu celular, choom: "+note;addMessage("CAPRI",a,true);speak(a);return true;
+                String a="Anotado no seu celular: "+note;addMessage("CAPRI",a,true);speak(a);return true;
             }
             if(s.startsWith("timer ")||s.startsWith("cronômetro ")||s.startsWith("cronometro ")){
                 java.util.regex.Matcher m=java.util.regex.Pattern.compile("(\\d+)\\s*(s|segundos?|minutos?|min|horas?|h)",java.util.regex.Pattern.CASE_INSENSITIVE).matcher(s);
                 if(m.find()){
                     int n=Integer.parseInt(m.group(1));String unit=m.group(2);int sec=unit.startsWith("h")?n*3600:(unit.startsWith("s")?n:n*60);
                     Intent timer=new Intent(android.provider.AlarmClock.ACTION_SET_TIMER).putExtra(android.provider.AlarmClock.EXTRA_LENGTH,sec).putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"Capri").putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
-                    startActivity(timer);String a="Timer de "+n+" "+unit+" aberto. Não dorme no volante, choom.";addMessage("CAPRI",a,true);speak(a);return true;
+                    startActivity(timer);String a="Timer de "+n+" "+unit+" aberto. Não dorme no volante.";addMessage("CAPRI",a,true);speak(a);return true;
                 }
             }
             if(s.startsWith("pesquise ")||s.startsWith("pesquisa ")||s.startsWith("procure ")){
                 String term=q.substring(q.indexOf(' ')+1).trim();
                 startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.google.com/search?q="+java.net.URLEncoder.encode(term,"UTF-8"))));
-                String a="Abri a busca pra você, choom.";addMessage("CAPRI",a,true);speak(a);return true;
+                String a="Abri a busca pra você.";addMessage("CAPRI",a,true);speak(a);return true;
             }
             if(s.startsWith("abre ")||s.startsWith("abrir ")){
                 String target=q.substring(q.indexOf(' ')+1).trim().toLowerCase(Locale.ROOT);Intent launch;
@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
                 else if(target.startsWith("http"))launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(target));
                 else launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.google.com/search?q="+java.net.URLEncoder.encode(target,"UTF-8")));
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(launch);
-                String a="Feito. Mandei abrir "+target+", choom.";addMessage("CAPRI",a,true);speak(a);return true;
+                String a="Feito. Mandei abrir "+target+".";addMessage("CAPRI",a,true);speak(a);return true;
             }
         }catch(Exception e){String a="Não consegui executar essa ação no Android: "+e.getMessage();addMessage("CAPRI",a,true);speak(a);return true;}
         return false;
@@ -277,7 +277,7 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk, choom ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu. Usuário: "+q));
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu. Usuário: "+q));
                 JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
                 try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
                 int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
@@ -288,7 +288,7 @@ public class MainActivity extends Activity {
             else {if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
             if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
-            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk, choom ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu."));
+            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu."));
             try{
                 JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
                 for(int i=0;i<history.length();i++){JSONObject item=history.getJSONObject(i);msgs.put(new JSONObject().put("role",item.optString("role","user")).put("content",item.optString("content","")));}
