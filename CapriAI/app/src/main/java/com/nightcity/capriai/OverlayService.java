@@ -165,7 +165,7 @@ public class OverlayService extends Service {
         return System.currentTimeMillis()-last>=180000L;
     }
     void maybeSpeakSpontaneously(){
-        if(destroyed||dragging||!canSpeakAutonomously()||autoTts==null)return;
+        if(destroyed||dragging||!canSpeakAutonomously())return;
         String provider=getPrefs().getString("ai_provider","Offline");
         String key=ApiKeyStore.get(this);
         if(!key.isEmpty()&&("OpenAI-compatible".equals(provider)||"Ollama local".equals(provider))){
