@@ -1,0 +1,89 @@
+package com.nightcity.capriai;
+
+import android.content.Context;
+import android.graphics.*;
+import android.os.SystemClock;
+import android.view.View;
+import org.json.*;
+import java.io.*;
+
+public class CapriCharacterView extends View {
+    private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    private JSONObject model;
+    private String pose="sit";
+    private boolean speaking=false, blink=false;
+    private long start=SystemClock.uptimeMillis();
+    private final int crimson=0xfff2154c, violet=0xff8a3dff, ink=0xff0a0710, green=0xff22f27a, blue=0xff1d6cff, white=0xffffffff;
+    private final HandlerTick tick=new HandlerTick();
+
+    public CapriCharacterView(Context c){super(c);setLayerType(View.LAYER_TYPE_HARDWARE,null);load(c);}
+    private void load(Context c){
+        try(InputStream in=c.getAssets().open("capri_model.json");ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            byte[] b=new byte[8192];int n;while((n=in.read(b))>0)out.write(b,0,n);
+            model=new JSONObject(out.toString("UTF-8"));
+        }catch(Exception ignored){model=null;}
+    }
+    public void setSpeaking(boolean value){speaking=value;invalidate();}
+    public void setPose(String value){if(value!=null&&model!=null&&model.optJSONObject("poses").has(value)){pose=value;invalidate();}}
+    public void react(){start=SystemClock.uptimeMillis();invalidate();}
+    public void setBlink(boolean value){blink=value;invalidate();}
+    @Override protected void onDraw(Canvas c){
+        super.onDraw(c);float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
+        c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
+        try{
+            JSONObject p=model.getJSONObject("poses").getJSONObject(pose);
+            JSONArray b=p.getJSONArray("bounds");float minX=(float)b.getDouble(0),minY=(float)b.getDouble(1),maxX=(float)b.getDouble(2),maxY=(float)b.getDouble(3);
+            float t=(SystemClock.uptimeMillis()-start)/1000f;
+            float scale=Math.min(w/(maxX-minX),h/(maxY-minY))*.92f;
+            float bob=(float)Math.sin(t*1.7f)*(speaking?2.6f:1.4f)*d;
+            c.save();c.translate((w-(maxX-minX)*scale)/2f-minX*scale,(h-(maxY-minY)*scale)/2f-minY*scale+bob);
+            c.scale(scale,scale);
+            JSONObject layers=p.getJSONObject("layers");
+            drawLayer(c,layers,"violet",violet);
+            drawLayer(c,layers,"hair",crimson);
+            drawLayer(c,layers,"crimson",crimson);
+            drawLayer(c,layers,"shade",0xffc80f3f);
+            drawLayer(c,layers,"ink",ink);
+            drawLayer(c,layers,"green",green);
+            JSONObject face=p.optJSONObject("face");
+            if(face!=null)drawFace(c,(float)face.optDouble("x"),(float)face.optDouble("y"),(float)face.optDouble("angle"),t);
+            c.restore();
+            if(speaking)postInvalidateDelayed(55);else postInvalidateDelayed(120);
+        }catch(Exception ignored){drawFallback(c,w,h,d);}
+    }
+    private void drawLayer(Canvas c,JSONObject layers,String name,int color)throws Exception{
+        JSONArray polys=layers.optJSONArray(name);if(polys==null)return;paint.setColor(color);paint.setStyle(Paint.Style.FILL);
+        for(int i=0;i<polys.length();i++){JSONArray pts=polys.getJSONArray(i);if(pts.length()<3)continue;Path path=new Path();
+            JSONArray first=pts.getJSONArray(0);path.moveTo((float)first.getDouble(0),(float)first.getDouble(1));
+            for(int j=1;j<pts.length();j++){JSONArray q=pts.getJSONArray(j);path.lineTo((float)q.getDouble(0),(float)q.getDouble(1));}
+            path.close();c.drawPath(path,paint);
+        }
+    }
+    private void drawFace(Canvas c,float x,float y,float angle,float t){
+        c.save();c.translate(x,y);c.rotate((float)Math.toDegrees(angle));
+        Path head=new Path();head.moveTo(-22,-25);head.lineTo(-27,-9);head.lineTo(-24,8);head.lineTo(-15,21);head.lineTo(-5,30);head.lineTo(1,33);head.lineTo(6,29);head.lineTo(16,19);head.lineTo(24,6);head.lineTo(27,-10);head.lineTo(21,-26);head.lineTo(8,-32);head.lineTo(-9,-31);head.close();
+        paint.setColor(violet);c.save();c.translate(-1.6f,2);c.drawPath(head,paint);c.restore();paint.setColor(ink);c.drawPath(head,paint);
+        Path l=new Path();l.moveTo(-28,-15);l.lineTo(-3,-20);l.lineTo(-2,4);l.lineTo(-8,9);l.lineTo(-23,8);l.lineTo(-29,-2);l.close();
+        Path r=new Path();r.moveTo(3,-21);r.lineTo(28,-17);r.lineTo(30,-3);r.lineTo(23,7);r.lineTo(7,9);r.lineTo(2,4);r.close();
+        paint.setColor(green);c.drawPath(l,paint);c.drawPath(r,paint);
+        drawEye(c,-13.5f,-5.8f,1.08f,-.05f);drawEye(c,13.5f,-3.6f,.92f,.1f);
+        paint.setColor(ink);Path bang=new Path();bang.moveTo(-17,-32);bang.lineTo(-3,-32);bang.lineTo(-8,-14);bang.close();c.drawPath(bang,paint);
+        bang.reset();bang.moveTo(3,-32);bang.lineTo(17,-30);bang.lineTo(7,-16);bang.close();c.drawPath(bang,paint);
+        if(speaking){float open=.45f+(float)Math.abs(Math.sin(t*12))*.55f;paint.setColor(0xff2a0f3a);c.drawRoundRect(-6,17,6,17+9*open,2,2,paint);paint.setColor(white);Path fang=new Path();fang.moveTo(-6,17);fang.lineTo(-2,19);fang.lineTo(0,18);fang.lineTo(2,19);fang.lineTo(6,17);fang.lineTo(2,27);fang.lineTo(0,29);fang.lineTo(-3,26);fang.close();c.drawPath(fang,paint);}
+        else{paint.setColor(white);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.15f);Path mouth=new Path();mouth.moveTo(-7,19);mouth.lineTo(-3,18);mouth.lineTo(0,20);mouth.lineTo(3,18);mouth.lineTo(7,19);c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);}
+        c.restore();
+    }
+    private void drawEye(Canvas c,float x,float y,float sx,float rot){
+        c.save();c.translate(x,y);c.rotate(rot*57.3f);c.scale(sx,1);
+        Path eye=new Path();eye.moveTo(-12,-1);eye.quadTo(0,-10,12,-1);eye.quadTo(0,8,-12,-1);eye.close();
+        paint.setColor(ink);c.drawPath(eye,paint);c.save();c.clipPath(eye);
+        paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,6.8f,paint);paint.setStyle(Paint.Style.FILL);
+        paint.setColor(blue);c.drawCircle(0,0,5,paint);paint.setColor(white);c.drawCircle(0,0,1.8f,paint);c.restore();c.restore();
+    }
+    private void drawFallback(Canvas c,float w,float h,float d){
+        paint.setColor(crimson);c.drawCircle(w/2,h/2,Math.min(w,h)*.3f,paint);
+        paint.setColor(green);c.drawCircle(w*.42f,h*.42f,5*d,paint);c.drawCircle(w*.58f,h*.42f,5*d,paint);
+    }
+    private static class HandlerTick {}
+}
