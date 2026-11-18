@@ -2,6 +2,6 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.nightcity.capriai'
  compileSdk 35
- defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 9; versionName '0.9.0'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
+ defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 10; versionName '0.9.1'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
