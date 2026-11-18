@@ -5,6 +5,7 @@ import android.os.*;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.media.projection.*;
 import android.util.DisplayMetrics;
 import android.view.*;
@@ -197,6 +198,7 @@ public class MainActivity extends Activity {
         String q=raw.trim(),s=q.toLowerCase(Locale.ROOT);
         try{
             if(s.equals("voltar")||s.equals("volte")||s.equals("voltar uma tela")){
+                if(!getSharedPreferences("capri_settings",0).getBoolean("android_plugin",true)){String a="O módulo de ações do Android está desativado em PLUGINS.";addMessage("CAPRI",a,true);speak(a);return true;}
                 boolean ok=CapriAccessibilityService.globalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK);
                 String a=ok?"Voltei uma tela.":"Ative a acessibilidade em PLUGINS para executar esse comando.";addMessage("CAPRI",a,true);speak(a);return true;
             }
@@ -228,11 +230,13 @@ public class MainActivity extends Activity {
                 }
             }
             if(s.startsWith("pesquise ")||s.startsWith("pesquisa ")||s.startsWith("procure ")){
+                if(!getSharedPreferences("capri_settings",0).getBoolean("web_plugin",true)){String a="O módulo Web está desativado. Ative-o em PLUGINS.";addMessage("CAPRI",a,true);speak(a);return true;}
                 String term=q.substring(q.indexOf(' ')+1).trim();
                 startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.google.com/search?q="+java.net.URLEncoder.encode(term,"UTF-8"))));
                 String a="Abri a busca pra você.";addMessage("CAPRI",a,true);speak(a);return true;
             }
             if(s.startsWith("abre ")||s.startsWith("abrir ")){
+                if(!getSharedPreferences("capri_settings",0).getBoolean("android_plugin",true)){String a="O módulo de ações do Android está desativado. Ative-o em PLUGINS.";addMessage("CAPRI",a,true);speak(a);return true;}
                 String target=q.substring(q.indexOf(' ')+1).trim().toLowerCase(Locale.ROOT);Intent launch;
                 if(target.contains("configura"))launch=new Intent(android.provider.Settings.ACTION_SETTINGS);
                 else if(target.contains("câmera")||target.contains("camera"))launch=new Intent("android.media.action.IMAGE_CAPTURE");
@@ -278,6 +282,7 @@ public class MainActivity extends Activity {
         String model=sp.getString("ai_model","gpt-4o-mini");
         String base=sp.getString("ai_endpoint","https://api.openai.com/v1").trim();
         if(provider.equals("Offline"))return localReply(q);
+        if(provider.equals("OpenAI-compatible")&&(api==null||api.trim().isEmpty()))return "A chave da OpenAI não foi configurada. Abra CONFIG, cole a chave secreta da API e salve.";
         HttpURLConnection c=null;
         try{
             if(provider.equals("Google Gemini")){
@@ -307,7 +312,7 @@ public class MainActivity extends Activity {
             if(provider.equals("Ollama local")){if(base.isEmpty())base="http://127.0.0.1:11434";if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
             else {if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-            if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
+            if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api.trim());
             JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu."));
             long screenAge=System.currentTimeMillis()-sp.getLong("active_screen_at",0L);
             if(sp.getBoolean("screen_context_to_ai",false)&&screenAge>=0&&screenAge<30000L){
