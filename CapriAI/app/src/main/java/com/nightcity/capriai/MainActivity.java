@@ -374,9 +374,10 @@ public class MainActivity extends Activity {
         if(!voiceAllowed(sp))return;
         if(!sp.getBoolean("cloud_voice",true)){return;}
         String provider=sp.getString("ai_provider","Offline");
-        String api=ApiKeyStore.get(this).trim();
-        if(!"Google Gemini".equals(provider)||api.isEmpty()){
-            if(!voiceWarningShown){voiceWarningShown=true;Toast.makeText(this,"Para a voz neural, selecione Google Gemini e configure uma chave Gemini em CONFIG.",Toast.LENGTH_LONG).show();}
+        String api=ApiKeyStore.getGemini(this).trim();
+        if(api.isEmpty()&&"Google Gemini".equals(provider))api=ApiKeyStore.get(this).trim();
+        if(api.isEmpty()){
+            if(!voiceWarningShown){voiceWarningShown=true;Toast.makeText(this,"Para a voz neural, configure uma chave Gemini TTS em CONFIG. A chave é independente do provedor de conversa.",Toast.LENGTH_LONG).show();}
             return;
         }
         new Thread(()->{
