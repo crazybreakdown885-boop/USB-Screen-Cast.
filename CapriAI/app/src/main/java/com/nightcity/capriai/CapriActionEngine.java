@@ -40,7 +40,7 @@ public final class CapriActionEngine {
         {"blink","sit","neutra","*pisca e volta a prestar atenção*"},
         {"settle","sit","neutra","*volta a se ajeitar confortavelmente*"},
         {"dance","back","feliz","*faz uma dancinha curta e animada*"},
-        {"twirl","back","feliz","*dá um giro gracioso no próprio lugar*"},
+        {"teleport","back","surpresa","*some num brilho e reaparece em outro cantinho*"},
         {"bounce","sit","feliz","*dá um pulinho de empolgação*"},
         {"curtsy","sit","envergonhada","*faz uma reverência delicada*"},
         {"peek","crouch","curiosa","*espreita de lado para observar melhor*"}
