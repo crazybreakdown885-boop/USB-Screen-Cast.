@@ -50,7 +50,10 @@ public class CapriSettingsActivity extends Activity {
         });
         section("VOZ / PORTUGUÊS BRASILEIRO");
         TextView voiceInfo=text("VOZ NEURAL ONLINE: usa Gemini TTS, não a voz instalada no celular. A chave Gemini TTS abaixo é separada da chave de conversa. Escolha uma voz pronta ou crie uma persona vocal original no AI Studio e cole o ID voice_...; replicação de voz exige consentimento da pessoa. A voz é sintética.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
-        check("Usar voz neural online (sem voz padrão do celular)","cloud_voice",true);
+        check("Usar voz neural online (Gemini)","cloud_voice",true);
+        check("Preferir voz neural offline no próprio aparelho","offline_voice_enabled",false);
+        TextView offlineVoiceInfo=text("VOZ OFFLINE PT-BR: motor neural Sherpa-ONNX + modelo Piper de aproximadamente 63 MB. Depois de baixado, fala sem internet e sem outro aplicativo de TTS. É uma voz licenciada e original, não uma cópia da dubladora.",10,0xffa8a5b5);offlineVoiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(offlineVoiceInfo);
+        Button downloadVoice=button(PiperOfflineVoice.isReady(this)?"VOZ OFFLINE INSTALADA • BAIXAR NOVAMENTE":"BAIXAR PACOTE DE VOZ OFFLINE PT-BR (~70 MB)");page.addView(downloadVoice,new LinearLayout.LayoutParams(-1,dp(46)));downloadVoice.setOnClickListener(v->{android.app.ProgressDialog progress=new android.app.ProgressDialog(this);progress.setTitle("Instalando voz da Capri");progress.setMessage("Baixando modelo PT-BR...");progress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);progress.setMax(100);progress.setCancelable(false);progress.show();PiperOfflineVoice.download(this,new PiperOfflineVoice.DownloadListener(){public void onProgress(int p){runOnUiThread(()->progress.setProgress(p));}public void onComplete(String error){progress.dismiss();if(error==null){prefs.edit().putBoolean("offline_voice_enabled",true).apply();new AlertDialog.Builder(CapriSettingsActivity.this).setTitle("Voz offline instalada").setMessage("A Capri agora pode falar em português brasileiro sem internet. Ative a opção de voz offline para priorizá-la.").setPositiveButton("OK",null).show();}else new AlertDialog.Builder(CapriSettingsActivity.this).setTitle("Falha ao instalar voz").setMessage(error).setPositiveButton("OK",null).show();}});});
         EditText geminiVoiceKey=field("Chave API Gemini para gerar a voz");geminiVoiceKey.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);geminiVoiceKey.setText(ApiKeyStore.getGemini(this));row("Chave Gemini TTS (armazenada criptografada)",geminiVoiceKey);
         String[] voiceNames={"Leda","Kore","Aoede","Zephyr","Puck","Charon","Fenrir","Orus","Callirrhoe","Autonoe","Enceladus","Iapetus","Umbriel","Algieba","Despina","Erinome","Algenib","Rasalgethi","Laomedeia","Achernar","Alnilam","Schedar","Gacrux","Pulcherrima","Achird","Zubenelgenubi","Vindemiatrix","Sadachbia","Sadaltager","Sulafat"};
         Spinner voiceChoice=new Spinner(this);voiceChoice.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,voiceNames));String savedVoice=prefs.getString("voice_name","Leda");int vi=java.util.Arrays.asList(voiceNames).indexOf(savedVoice);voiceChoice.setSelection(vi<0?0:vi);row("Voz neural",voiceChoice);
@@ -87,6 +90,8 @@ public class CapriSettingsActivity extends Activity {
         check("Permitir análise da tela quando eu pedir","screen_context",true);
         check("Manter leitura da tela ativa com Capri aberta","screen_monitor",false);
         check("Enviar imagens da tela somente quando eu pedir","screen_on_demand",true);
+        check("Permitir que Capri use texto visível da tela na conversa online","screen_context_to_ai",false);
+        Button accessibility=button("ATIVAR LEITURA DA TELA (ACESSIBILIDADE)");page.addView(accessibility,new LinearLayout.LayoutParams(-1,dp(44)));accessibility.setOnClickListener(v->startActivity(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)));
         TextView privacy=text("Screen capture is requested through Android MediaProjection. The system shows its own consent prompt and capture indicator. Images are sent to the selected Provedor de IA only when you request screen analysis.",11,0xffa8a5b5);privacy.setPadding(0,dp(4),0,dp(12));page.addView(privacy);
         section("SISTEMA");
         check("Reabrir sobreposição ao voltar para Capri","restore_overlay",true);
@@ -125,7 +130,7 @@ public class CapriSettingsActivity extends Activity {
                 if("Ollama local".equals(provider)){if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
                 else if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";
                 c=(java.net.HttpURLConnection)new java.net.URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(12000);c.setReadTimeout(25000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
+                if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api.trim());
                 String selectedModel=chosen.isEmpty()?("Ollama local".equals(provider)?"llama3.2":"gpt-4o-mini"):chosen;
                 org.json.JSONObject body=new org.json.JSONObject().put("model",selectedModel).put("messages",new org.json.JSONArray().put(new org.json.JSONObject().put("role","user").put("content","Responda somente: OK"))).put("max_completion_tokens",8);
                 if("Ollama local".equals(provider))body.put("stream",false);
