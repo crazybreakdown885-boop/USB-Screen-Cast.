@@ -141,7 +141,7 @@ public class MainActivity extends Activity {
         if(handleAndroidCommand(q))return;
         String api=getSharedPreferences("capri_settings",0).getString("api_key","");
         if(getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false)&&latestScreenImage!=null){
-            new Thread(()->{String a=askVision(api,latestScreenImage);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
+            new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
         }else if(getSharedPreferences("capri_settings",0).getString("ai_provider","OpenAI-compatible").equals("Offline")){
             String a=localReply(q);addMessage("CAPRI",a,true);speak(a);
         }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
@@ -239,7 +239,8 @@ public class MainActivity extends Activity {
         String api=getSharedPreferences("capri_settings",0).getString("api_key","");
         new Thread(()->{String answer=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",answer,true);speak(answer);});}).start();
     }
-    String askVision(String api,String b64){
+    String askVision(String api,String b64){return askVision(api,b64,"Leia a captura de tela e ajude o usuário.");}
+    String askVision(String api,String b64,String question){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
         String provider=sp.getString("ai_provider","OpenAI-compatible");
         String model=sp.getString("ai_model","gpt-4o-mini");
@@ -250,7 +251,7 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri. Leia a tela e ajude o usuário em português brasileiro, de forma direta.")).put(new JSONObject().put("inline_data",new JSONObject().put("mime_type","image/jpeg").put("data",b64)));
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri. "+question+" Responda em português brasileiro, de forma direta.")).put(new JSONObject().put("inline_data",new JSONObject().put("mime_type","image/jpeg").put("data",b64)));
                 JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",600));
                 try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
                 int status=c.getResponseCode();String raw=readAll(status<400?c.getInputStream():c.getErrorStream());if(status>=400)return "Gemini não conseguiu ler a tela ("+status+").";
@@ -265,7 +266,7 @@ public class MainActivity extends Activity {
                 JSONArray msgs=new JSONArray().put(new JSONObject().put("role","user").put("content","Leia esta captura de tela e ajude em português brasileiro.").put("images",new JSONArray().put(b64)));
                 body=new JSONObject().put("model",model).put("messages",msgs).put("stream",false);
             }else{
-                JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Você é Capri. Leia a captura de tela e ajude em português brasileiro, de forma direta.")).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));
+                JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Você é Capri. "+question+" Responda em português brasileiro, de forma direta.")).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));
                 JSONArray msgs=new JSONArray().put(new JSONObject().put("role","user").put("content",content));
                 body=new JSONObject().put("model",model).put("messages",msgs).put("max_tokens",600);
             }
