@@ -44,12 +44,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.0"
+          TAG="capri-v0.9.1"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.0" --notes "Capri AI para Android 0.9.0. APK debug ARMv7/ARM64."
+            gh release edit "$TAG" --title "Capri AI Android 0.9.1" --notes "Capri AI para Android 0.9.1. A chave API agora fica visível no campo de configurações."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.8.0" --notes "Capri AI para Android 0.8.0. APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.1" --notes "Capri AI para Android 0.9.1. A chave API agora fica visível no campo de configurações. APK debug ARMv7/ARM64."
           fi
           if gh release view "V0.1.0" >/dev/null 2>&1; then
             gh release delete "V0.1.0" --yes
