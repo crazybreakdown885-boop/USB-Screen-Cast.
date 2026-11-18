@@ -22,7 +22,7 @@ public class CapriSettingsActivity extends Activity {
         section("CONVERSA / MODELO");
         String[] providers={"OpenAI-compatible","Google Gemini","Ollama local","Offline"};
         Spinner provider=new Spinner(this);provider.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,providers));
-        String saved=prefs.getString("ai_provider","Offline");provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
+        String saved=prefs.getString("ai_provider","Offline");if("Offline".equals(saved)&&!prefs.getString("api_key","").trim().isEmpty())saved="OpenAI-compatible";provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
         row("Provedor de IA",provider);
         TextView offlineInfo=text("OFFLINE: funciona sem chave. Conversa local básica, comandos, notas e voz. IA generativa e visão completa exigem provedor externo.",11,0xffa8a5b5);offlineInfo.setPadding(0,dp(6),0,dp(8));page.addView(offlineInfo);
         EditText model=field("Nome do modelo (ex.: gpt-4o-mini)");model.setText(prefs.getString("ai_model","gpt-4o-mini"));row("Modelo",model);
@@ -31,6 +31,21 @@ public class CapriSettingsActivity extends Activity {
         api.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
         api.setTransformationMethod(android.text.method.HideReturnsTransformationMethod.getInstance());
         api.setText(prefs.getString("api_key",""));row("Chave da API (texto visível)",api);
+        Button testApi=button("TESTAR CONEXÃO DA API");page.addView(testApi,new LinearLayout.LayoutParams(-1,dp(44)));
+        TextView apiHint=text("O teste usa a chave digitada acima sem salvá-la. Para OpenAI, selecione OpenAI-compatible. O modo Offline não chama a API.",10,0xffa8a5b5);apiHint.setPadding(0,dp(4),0,dp(8));page.addView(apiHint);
+        testApi.setOnClickListener(v->{
+            String selected=providers[provider.getSelectedItemPosition()];
+            String secret=api.getText().toString().trim();
+            if("Offline".equals(selected)&&!secret.isEmpty()){provider.setSelection(0);selected="OpenAI-compatible";}
+            if("Offline".equals(selected)){Toast.makeText(this,"Selecione um provedor online primeiro.",Toast.LENGTH_LONG).show();return;}
+            if(!"Ollama local".equals(selected)&&secret.isEmpty()){api.setError("Cole sua chave completa aqui");return;}
+            testApi.setEnabled(false);testApi.setText("TESTANDO...");
+            final String p=selected,k=secret,m=model.getText().toString().trim(),url=endpoint.getText().toString().trim();
+            new Thread(()->{
+                String result=runApiTest(p,k,m,url);
+                runOnUiThread(()->{testApi.setEnabled(true);testApi.setText("TESTAR CONEXÃO DA API");new AlertDialog.Builder(this).setTitle(result.startsWith("Conexão OK")?"API CONECTADA":"FALHA NA API").setMessage(result).setPositiveButton("OK",null).show();});
+            }).start();
+        });
         section("VOZ");
         check("Ativar fala da Capri","voice_enabled",true);
         seek("Velocidade da fala","voice_rate",50,200,94);
@@ -38,6 +53,9 @@ public class CapriSettingsActivity extends Activity {
         check("Ler respostas em voz alta","voice_replies",true);
         section("PERSONAGEM");
         check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
+        check("Capri se movimenta livremente pela tela","free_roam",true);
+        check("Usar teleporte com efeito visual","teleport_enabled",true);
+        check("Mudar pose e forma automaticamente","auto_morph",true);
         String[] poses={"sit","lie","crouch","back"};String[] poseLabels={"Sentada","Deitada","Agachada","De costas"};Spinner pose=new Spinner(this);pose.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,poseLabels));String poseSaved=prefs.getString("character_pose","sit");int poseIndex=java.util.Arrays.asList(poses).indexOf(poseSaved);pose.setSelection(poseIndex<0?0:poseIndex);row("Pose inicial",pose);
         seek("Tamanho da personagem","character_scale",40,180,100);
         seek("Intensidade das animações","animation_intensity",0,150,100);
@@ -70,6 +88,41 @@ public class CapriSettingsActivity extends Activity {
         });
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
         setContentView(scroll);
+    }
+    String runApiTest(String provider,String api,String model,String endpoint){
+        java.net.HttpURLConnection c=null;
+        try{
+            String chosen=model;
+            if("Google Gemini".equals(provider)){
+                if(chosen.isEmpty())chosen="gemini-2.0-flash";
+                java.net.URL u=new java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/"+chosen+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
+                c=(java.net.HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(12000);c.setReadTimeout(25000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
+                org.json.JSONObject body=new org.json.JSONObject().put("contents",new org.json.JSONArray().put(new org.json.JSONObject().put("parts",new org.json.JSONArray().put(new org.json.JSONObject().put("text","Responda somente: OK"))))).put("generationConfig",new org.json.JSONObject().put("maxOutputTokens",8));
+                try(java.io.OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+            }else{
+                String base=endpoint.trim();if(base.isEmpty())base="Ollama local".equals(provider)?"http://127.0.0.1:11434":"https://api.openai.com/v1";
+                if("Ollama local".equals(provider)){if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
+                else if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";
+                c=(java.net.HttpURLConnection)new java.net.URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(12000);c.setReadTimeout(25000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
+                if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
+                String selectedModel=chosen.isEmpty()?("Ollama local".equals(provider)?"llama3.2":"gpt-4o-mini"):chosen;
+                org.json.JSONObject body=new org.json.JSONObject().put("model",selectedModel).put("messages",new org.json.JSONArray().put(new org.json.JSONObject().put("role","user").put("content","Responda somente: OK"))).put("max_completion_tokens",8);
+                if("Ollama local".equals(provider))body.put("stream",false);
+                try(java.io.OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+            }
+            int status=c.getResponseCode();java.io.InputStream is=status<400?c.getInputStream():c.getErrorStream();
+            java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] buf=new byte[2048];int n;while(is!=null&&(n=is.read(buf))>0)out.write(buf,0,n);
+            String raw=out.toString("UTF-8");
+            if(status>=200&&status<300)return "Conexão OK! A API respondeu com HTTP "+status+".\nModelo: "+(chosen.isEmpty()?"padrão":chosen);
+            String detail=raw.replaceAll("\\s+"," ").trim();if(detail.length()>420)detail=detail.substring(0,420);
+            if(status==401)return "HTTP 401 — a chave foi recusada. Confira se copiou a chave secreta inteira, se ela está ativa e se pertence ao projeto correto.\n"+detail;
+            if(status==403)return "HTTP 403 — a chave não tem permissão para esse recurso/projeto.\n"+detail;
+            if(status==404)return "HTTP 404 — endpoint ou nome do modelo não encontrado. Para OpenAI use https://api.openai.com/v1 e gpt-4o-mini.\n"+detail;
+            if(status==429)return "HTTP 429 — limite de requisições ou créditos/faturamento da API. A assinatura ChatGPT não inclui créditos da API.\n"+detail;
+            if(status==400)return "HTTP 400 — a API recebeu a chave, mas rejeitou o modelo ou os parâmetros. Confira o nome do modelo.\n"+detail;
+            return "HTTP "+status+" — a API respondeu com erro.\n"+detail;
+        }catch(Exception e){return "Não consegui alcançar a API: "+e.getClass().getSimpleName()+": "+e.getMessage()+"\nConfira a internet e o endereço do endpoint.";}
+        finally{if(c!=null)c.disconnect();}
     }
     TextView text(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setTypeface(Typeface.MONOSPACE);return t;}
     void section(String s){TextView t=text("— "+s+" —",13,cyan);t.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);t.setPadding(0,dp(18),0,dp(7));page.addView(t);}
