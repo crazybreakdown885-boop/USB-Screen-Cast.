@@ -22,7 +22,7 @@ public class CapriSettingsActivity extends Activity {
         section("CONVERSA / MODELO");
         String[] providers={"OpenAI-compatible","Google Gemini","Ollama local","Offline"};
         Spinner provider=new Spinner(this);provider.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,providers));
-        String saved=prefs.getString("ai_provider","Offline");if("Offline".equals(saved)&&!prefs.getString("api_key","").trim().isEmpty())saved="OpenAI-compatible";provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
+        String saved=prefs.getString("ai_provider","Offline");if("Offline".equals(saved)&&!ApiKeyStore.get(this).trim().isEmpty())saved="OpenAI-compatible";provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
         row("Provedor de IA",provider);
         TextView offlineInfo=text("OFFLINE: funciona sem chave. Conversa local básica, comandos, notas e voz. IA generativa e visão completa exigem provedor externo.",11,0xffa8a5b5);offlineInfo.setPadding(0,dp(6),0,dp(8));page.addView(offlineInfo);
         EditText model=field("Nome do modelo (ex.: gpt-4o-mini)");model.setText(prefs.getString("ai_model","gpt-4o-mini"));row("Modelo",model);
@@ -37,7 +37,7 @@ public class CapriSettingsActivity extends Activity {
         createKey.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://platform.openai.com/api-keys")));}catch(Exception ignored){}});
         testApi.setOnClickListener(v->{
             String selected=providers[provider.getSelectedItemPosition()];
-            String secret=api.getText().toString().trim();
+            String secret=normalizeApiKey(api.getText().toString());
             if("Offline".equals(selected)&&!secret.isEmpty()){provider.setSelection(0);selected="OpenAI-compatible";}
             if("Offline".equals(selected)){Toast.makeText(this,"Selecione um provedor online primeiro.",Toast.LENGTH_LONG).show();return;}
             if(!"Ollama local".equals(selected)&&secret.isEmpty()){api.setError("Cole sua chave completa aqui");return;}
@@ -89,7 +89,7 @@ public class CapriSettingsActivity extends Activity {
         Button save=button("SALVAR CONFIGURAÇÕES");LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));sp.topMargin=dp(18);page.addView(save,sp);
         save.setOnClickListener(v->{
             String p=providers[provider.getSelectedItemPosition()];
-            String enteredKey=api.getText().toString().trim();
+            String enteredKey=normalizeApiKey(api.getText().toString());
             if("Offline".equals(p)&&!enteredKey.isEmpty())p="OpenAI-compatible";
             try {
                 ApiKeyStore.save(this,enteredKey);
@@ -102,7 +102,7 @@ public class CapriSettingsActivity extends Activity {
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
         setContentView(scroll);
     }
-    String runApiTest(String provider,String api,String model,String endpoint){
+    String normalizeApiKey(String value){String k=value==null?"":value.trim();if(k.regionMatches(true,0,"Bearer ",0,7))k=k.substring(7).trim();if(k.length()>=2&&((k.startsWith("\\\"")&&k.endsWith("\\\""))||(k.startsWith("\\'")&&k.endsWith("\\'"))))k=k.substring(1,k.length()-1).trim();return k.replaceAll("[\\r\\n\\t ]+","");}\n    String runApiTest(String provider,String api,String model,String endpoint){
         java.net.HttpURLConnection c=null;
         try{
             String chosen=model;
