@@ -52,6 +52,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(300)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
         TextView tagline=label("◆ PRESENTE / ATENTA / ONLINE QUANDO CONECTADA ◆",9,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
+        LinearLayout quick=new LinearLayout(this);quick.setGravity(Gravity.CENTER);quick.setPadding(0,dp(5),0,dp(3));Button games=smallButton("🎮 JOGOS");Button system=smallButton("⚙ SISTEMA");quick.addView(games,new LinearLayout.LayoutParams(0,dp(40),1));LinearLayout.LayoutParams sysLp=new LinearLayout.LayoutParams(0,dp(40),1);sysLp.setMargins(dp(8),0,0,0);quick.addView(system,sysLp);root.addView(quick);games.setOnClickListener(v->startActivity(new Intent(this,GameHubActivity.class)));system.setOnClickListener(v->startActivity(new Intent(this,SystemControlActivity.class)));
         scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false);
         messages=new LinearLayout(this); messages.setOrientation(1); messages.setPadding(0,8,0,8); scroll.addView(messages);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
