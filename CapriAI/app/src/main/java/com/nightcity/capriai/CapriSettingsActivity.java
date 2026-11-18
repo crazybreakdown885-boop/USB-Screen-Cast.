@@ -30,9 +30,11 @@ public class CapriSettingsActivity extends Activity {
         EditText api=field("Chave da API");
         api.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
         api.setTransformationMethod(android.text.method.HideReturnsTransformationMethod.getInstance());
-        api.setText(prefs.getString("api_key",""));row("Chave da API (texto visível)",api);
+        api.setText(ApiKeyStore.get(this));row("Chave secreta da API (somente sua)",api);
         Button testApi=button("TESTAR CONEXÃO DA API");page.addView(testApi,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView apiHint=text("O teste usa a chave digitada acima sem salvá-la. Para OpenAI, selecione OpenAI-compatible. O modo Offline não chama a API.",10,0xffa8a5b5);apiHint.setPadding(0,dp(4),0,dp(8));page.addView(apiHint);
+        TextView apiHint=text("Cole sua chave secreta da plataforma OpenAI. Ela será criptografada no armazenamento do Android. Não use sua senha do ChatGPT. A API pode gerar cobranças separadas.",10,0xffa8a5b5);apiHint.setPadding(0,dp(4),0,dp(8));page.addView(apiHint);
+        Button createKey=button("CRIAR / OBTER MINHA CHAVE OPENAI");page.addView(createKey,new LinearLayout.LayoutParams(-1,dp(44)));
+        createKey.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://platform.openai.com/api-keys")));}catch(Exception ignored){}});
         testApi.setOnClickListener(v->{
             String selected=providers[provider.getSelectedItemPosition()];
             String secret=api.getText().toString().trim();
@@ -89,8 +91,13 @@ public class CapriSettingsActivity extends Activity {
             String p=providers[provider.getSelectedItemPosition()];
             String enteredKey=api.getText().toString().trim();
             if("Offline".equals(p)&&!enteredKey.isEmpty())p="OpenAI-compatible";
-            prefs.edit().putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("api_key",enteredKey).putString("character_pose",poses[pose.getSelectedItemPosition()]).apply();
-            Toast.makeText(this,"Configurações salvas, choom.",Toast.LENGTH_SHORT).show();finish();
+            try {
+                ApiKeyStore.save(this,enteredKey);
+                prefs.edit().remove("api_key").putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("character_pose",poses[pose.getSelectedItemPosition()]).apply();
+                Toast.makeText(this,enteredKey.isEmpty()?"Chave removida. Modo offline disponível.":"Chave salva com criptografia. Capri pronta para conectar online.",Toast.LENGTH_LONG).show();finish();
+            } catch(Exception ex) {
+                new AlertDialog.Builder(this).setTitle("Não foi possível proteger a chave").setMessage(ex.getMessage()).setPositiveButton("OK",null).show();
+            }
         });
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
         setContentView(scroll);
