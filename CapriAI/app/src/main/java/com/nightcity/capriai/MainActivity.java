@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
     String latestScreenImage=null;
     final Handler idleMotionHandler=new Handler(Looper.getMainLooper());
     final Random idleMotionRandom=new Random();
-    final Runnable idleMotion=new Runnable(){public void run(){if(capriFace==null)return;if(!keyboardVisible&&!composerFocused)animateCapriIdle();idleMotionHandler.postDelayed(this,45000+idleMotionRandom.nextInt(45000));}};
+    final Runnable idleMotion=new Runnable(){public void run(){if(capriFace==null)return;if(!keyboardVisible&&!composerFocused)animateCapriIdle();idleMotionHandler.postDelayed(this,22000+idleMotionRandom.nextInt(18000));}};
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=30) getWindow().setDecorFitsSystemWindows(true);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         applyImmersiveMode(true);
-        LinearLayout root=new LinearLayout(this); root.setOrientation(1); root.setPadding(14,8,14,8); root.setBackgroundColor(bg);
+        LinearLayout root=new LinearLayout(this); root.setOrientation(1); root.setPadding(14,8,14,8); root.setBackgroundColor(Color.TRANSPARENT); root.setClipChildren(false);
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
         TextView brand=label("CAPRI // COMPANHEIRA DIGITAL",14,cyan); brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
@@ -56,11 +56,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(300)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
         TextView tagline=label("◆ PRESENTE / ATENTA / ONLINE QUANDO CONECTADA ◆",9,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
-        LinearLayout quick=new LinearLayout(this);quick.setGravity(Gravity.CENTER);quick.setPadding(0,dp(5),0,dp(3));Button games=smallButton("🎮 JOGOS");Button system=smallButton("⚙ SISTEMA");quick.addView(games,new LinearLayout.LayoutParams(0,dp(40),1));LinearLayout.LayoutParams sysLp=new LinearLayout.LayoutParams(0,dp(40),1);sysLp.setMargins(dp(8),0,0,0);quick.addView(system,sysLp);root.addView(quick);games.setOnClickListener(v->startActivity(new Intent(this,GameHubActivity.class)));system.setOnClickListener(v->startActivity(new Intent(this,SystemControlActivity.class)));
+        LinearLayout quick=new LinearLayout(this);quick.setGravity(Gravity.CENTER);quick.setPadding(0,dp(5),0,dp(3));Button games=smallButton("🎮 JOGOS");Button system=smallButton("⚙ SISTEMA");Button plugins=smallButton("⌘ PLUGINS");quick.addView(games,new LinearLayout.LayoutParams(0,dp(42),1));LinearLayout.LayoutParams sysLp=new LinearLayout.LayoutParams(0,dp(42),1);sysLp.setMargins(dp(6),0,0,0);quick.addView(system,sysLp);LinearLayout.LayoutParams plugLp=new LinearLayout.LayoutParams(0,dp(42),1);plugLp.setMargins(dp(6),0,0,0);quick.addView(plugins,plugLp);root.addView(quick);games.setOnClickListener(v->startActivity(new Intent(this,GameHubActivity.class)));system.setOnClickListener(v->startActivity(new Intent(this,SystemControlActivity.class)));plugins.setOnClickListener(v->startActivity(new Intent(this,CapriPluginsActivity.class)));
         scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false);
         messages=new LinearLayout(this); messages.setOrientation(1); messages.setPadding(0,8,0,8); scroll.addView(messages);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        addMessage("CAPRI","Oi. Que bom que você voltou. Vou ficar por aqui com você.",true);
+        addMessage("CAPRI","Chum-chum! Oi. Que bom que você voltou. Vou ficar por aqui com você.",true);
         settings.setOnClickListener(v->startActivity(new Intent(this,CapriSettingsActivity.class)));
         LinearLayout composer=new LinearLayout(this); composer.setGravity(Gravity.CENTER_VERTICAL); composer.setPadding(6,4,6,4); composer.setBackground(new GradientBox(panel));
         prompt=field("Mensagem para Capri..."); prompt.setSingleLine(true); prompt.setTypeface(Typeface.MONOSPACE); prompt.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
         Button mic=smallButton("🎙"); Button send=smallButton("➤");
         composer.addView(mic,new LinearLayout.LayoutParams(dp(48),dp(48))); composer.addView(send,new LinearLayout.LayoutParams(dp(52),dp(48)));
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2); cp.setMargins(0,6,0,4); root.addView(composer,cp);
-        setContentView(root);
+        FrameLayout shell=new FrameLayout(this);shell.addView(new MatrixRainView(this),new FrameLayout.LayoutParams(-1,-1));shell.addView(root,new FrameLayout.LayoutParams(-1,-1));setContentView(shell);
         if(Build.VERSION.SDK_INT>=30) root.setOnApplyWindowInsetsListener((v,insets)->{
             boolean ime=insets.isVisible(android.view.WindowInsets.Type.ime());
             if(ime!=keyboardVisible){keyboardVisible=ime;applyImmersiveMode(!ime);}
@@ -132,6 +132,11 @@ public class MainActivity extends Activity {
             case "shrug":case "fidget":
                 capriFace.animate().rotation(4f).translationX(dp(4)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-3f).translationX(-dp(3)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).translationX(0f).setDuration(d/3).start()).start()).start();break;
             case "crouch":capriFace.animate().translationY(dp(10)).scaleY(base*.94f).setDuration(d).start();break;
+            case "dance":capriFace.animate().rotation(7f).translationY(-dp(9)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-7f).translationY(0).setDuration(d/2).start()).start();break;
+            case "twirl":capriFace.animate().rotationBy(360f).setDuration(d+500).start();break;
+            case "bounce":capriFace.animate().translationY(-dp(18)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
+            case "curtsy":capriFace.animate().translationY(dp(12)).scaleY(base*.92f).rotation(3f).setDuration(d).start();break;
+            case "peek":capriFace.animate().translationX(-dp(12)).rotation(-6f).setDuration(d/2).withEndAction(()->capriFace.animate().translationX(0).rotation(0).setDuration(d/2).start()).start();break;
             case "sway":
                 android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
                 if(audio!=null&&audio.isMusicActive())capriFace.animate().rotation(7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).setDuration(d/3).start()).start()).start();
@@ -166,7 +171,7 @@ public class MainActivity extends Activity {
     }
     TextView label(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setTypeface(Typeface.MONOSPACE);t.setPadding(0,3,0,3);return t;}
     EditText field(String hint){EditText e=new EditText(this);e.setSingleLine(true);e.setHint(hint);e.setHintTextColor(0xff85899c);e.setTextColor(Color.WHITE);e.setTextSize(14);e.setTypeface(Typeface.MONOSPACE);e.setPadding(12,6,12,6);e.setBackground(new GradientBox(0xff1c1f2b));return e;}
-    Button smallButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(0xff090a10);b.setTextSize(9);b.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);b.setAllCaps(false);b.setPadding(2,0,2,0);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(pink));return b;}
+    Button smallButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(0xffe8e5f2);b.setTextSize(9);b.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);b.setAllCaps(false);b.setPadding(3,0,3,0);GradientDrawable d=new GradientDrawable();d.setColor(0xdd171522);d.setCornerRadius(dp(9));d.setStroke(dp(1),0xff8a3dff);b.setBackground(d);return b;}
     void addMessage(String who,String text,boolean capri){if(capri&&capriFace!=null){capriFace.setMood(text);Intent moodIntent=new Intent(this,OverlayService.class).setAction(OverlayService.ACTION_MOOD).putExtra("mood_text",text);if(OverlayService.running)startService(moodIntent);}TextView t=label(who+"\n",14,capri?0xffffb6d5:Color.WHITE);t.setPadding(13,11,13,11);t.setTypeface(Typeface.MONOSPACE);t.setBackground(new HudBubble(capri?0xff08131c:0xff101018,capri?cyan:pink));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,5,0,7);messages.addView(t,p);if(capri){typeText(t,text,0);}else{t.append(text);}if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));}
     void typeText(TextView view,String value,int index){if(index>=value.length())return;char ch=value.charAt(index);view.append(String.valueOf(ch));if(ch!=' '&&ch!='\n'&&index%2==0)view.playSoundEffect(android.view.SoundEffectConstants.CLICK);if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));new Handler().postDelayed(()->typeText(view,value,index+1),28);}
     void sendMessage(){
@@ -191,6 +196,23 @@ public class MainActivity extends Activity {
     boolean handleAndroidCommand(String raw){
         String q=raw.trim(),s=q.toLowerCase(Locale.ROOT);
         try{
+            if(s.equals("voltar")||s.equals("volte")||s.equals("voltar uma tela")){
+                boolean ok=CapriAccessibilityService.globalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK);
+                String a=ok?"Voltei uma tela.":"Ative a acessibilidade em PLUGINS para executar esse comando.";addMessage("CAPRI",a,true);speak(a);return true;
+            }
+            if(s.equals("ir para tela inicial")||s.equals("abrir tela inicial")||s.equals("home")){
+                boolean ok=CapriAccessibilityService.globalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME);
+                String a=ok?"Tela inicial aberta.":"Ative a acessibilidade em PLUGINS para executar esse comando.";addMessage("CAPRI",a,true);speak(a);return true;
+            }
+            if(s.equals("abrir notificações")||s.equals("mostrar notificações")){
+                boolean ok=CapriAccessibilityService.globalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS);
+                String a=ok?"Abri suas notificações.":"Ative a acessibilidade em PLUGINS para executar esse comando.";addMessage("CAPRI",a,true);speak(a);return true;
+            }
+            if(s.startsWith("toque em ")||s.startsWith("clique em ")){
+                String target=q.substring(q.indexOf(' ')+1).trim();if(target.toLowerCase(Locale.ROOT).startsWith("em "))target=target.substring(3);
+                boolean ok=CapriAccessibilityService.clickVisibleText(target);
+                String a=ok?"Toquei em "+target+".":"Não encontrei esse texto clicável. Verifique a acessibilidade e a tela atual.";addMessage("CAPRI",a,true);speak(a);return true;
+            }
             if(s.startsWith("nota:")||s.startsWith("anote:")){
                 String note=q.substring(q.indexOf(':')+1).trim();if(note.isEmpty())return false;
                 java.util.Set<String> notes=new java.util.HashSet<>(getSharedPreferences("capri_settings",0).getStringSet("capri_notes",new java.util.HashSet<>()));
@@ -216,6 +238,8 @@ public class MainActivity extends Activity {
                 else if(target.contains("câmera")||target.contains("camera"))launch=new Intent("android.media.action.IMAGE_CAPTURE");
                 else if(target.contains("youtube"))launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://m.youtube.com"));
                 else if(target.contains("whatsapp")){launch=getPackageManager().getLaunchIntentForPackage("com.whatsapp");if(launch==null)launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://whatsapp.com"));}
+                else if(target.contains("opera gx")){launch=getPackageManager().getLaunchIntentForPackage("com.opera.gx");if(launch==null)launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.opera.com/gx"));}
+                else if(target.contains("opera")){launch=getPackageManager().getLaunchIntentForPackage("com.opera.browser");if(launch==null)launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.opera.com"));}
                 else if(target.contains("chrome")){launch=getPackageManager().getLaunchIntentForPackage("com.android.chrome");if(launch==null)launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://google.com"));}
                 else if(target.startsWith("http"))launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(target));
                 else launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.google.com/search?q="+java.net.URLEncoder.encode(target,"UTF-8")));
@@ -260,7 +284,7 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                String systemPrompt="Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu.";
+                String systemPrompt="Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Use o bordão curto chum-chum ocasionalmente quando combinar, sem repetir demais. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu.";
                 JSONArray contents=new JSONArray();
                 try{
                     JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
@@ -285,6 +309,14 @@ public class MainActivity extends Activity {
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
             if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
             JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu."));
+            long screenAge=System.currentTimeMillis()-sp.getLong("active_screen_at",0L);
+            if(sp.getBoolean("screen_context_to_ai",false)&&screenAge>=0&&screenAge<30000L){
+                String visible=sp.getString("active_screen_text","");
+                if(visible!=null&&!visible.trim().isEmpty()){
+                    if(visible.length()>4200)visible=visible.substring(0,4200);
+                    msgs.put(new JSONObject().put("role","system").put("content","Texto visível da tela atual, coletado pelo recurso de acessibilidade ativado pelo usuário. Use apenas se for relevante; pode estar incompleto:\n"+visible));
+                }
+            }
             try{
                 JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
                 for(int i=0;i<history.length();i++){JSONObject item=history.getJSONObject(i);msgs.put(new JSONObject().put("role",item.optString("role","user")).put("content",item.optString("content","")));}
@@ -372,6 +404,16 @@ public class MainActivity extends Activity {
     void speak(String s){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
         if(!voiceAllowed(sp))return;
+        if(sp.getBoolean("offline_voice_enabled",false)){
+            if(!PiperOfflineVoice.isReady(this)){
+                Toast.makeText(this,"A voz offline ainda não foi baixada. Abra CONFIG e baixe o pacote PT-BR.",Toast.LENGTH_LONG).show();
+            }else{
+                PiperOfflineVoice.speak(this,s,new PiperOfflineVoice.PlaybackListener(){
+                    public void onStart(){if(capriFace!=null)capriFace.setSpeaking(true);overlaySpeaking(true);}
+                    public void onFinish(String error){if(capriFace!=null)capriFace.setSpeaking(false);overlaySpeaking(false);if(error!=null)runOnUiThread(()->Toast.makeText(MainActivity.this,"Voz offline: "+error,Toast.LENGTH_LONG).show());}
+                });return;
+            }
+        }
         if(!sp.getBoolean("cloud_voice",true)){return;}
         String provider=sp.getString("ai_provider","Offline");
         String api=ApiKeyStore.getGemini(this).trim();
