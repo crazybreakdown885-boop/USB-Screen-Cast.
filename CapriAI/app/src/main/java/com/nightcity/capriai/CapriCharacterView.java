@@ -44,7 +44,7 @@ public class CapriCharacterView extends View {
         super.onDraw(c);android.content.SharedPreferences style=getContext().getSharedPreferences("capri_settings",0);crimson=style.getInt("capri_primary_color",0xfff2154c);violet=style.getInt("capri_hair_color",0xff8a3dff);green=style.getInt("capri_accent_color",0xff22f27a);blue=style.getInt("capri_eye_color",0xff1d6cff);String outfit=style.getString("outfit_style","original");String hat=style.getString("capri_hat_style","none");int outfitColor="neon".equals(outfit)?0xff20dff2:("hoodie".equals(outfit)?0xff8a3dff:("casual".equals(outfit)?0xff252333:("bunny".equals(outfit)?0xffffb6d5:crimson)));float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
         if(customArt!=null&&!faceOnly){float t=(SystemClock.uptimeMillis()-start)/1000f;float bob=(float)Math.sin(t*1.6f)*(speaking?2.4f:1.2f)*d;float scale=Math.min(w/customArt.getWidth(),h/customArt.getHeight())*.94f;float dw=customArt.getWidth()*scale,dh=customArt.getHeight()*scale;paint.setAlpha(255);c.drawBitmap(customArt,null,new RectF((w-dw)/2f,(h-dh)/2f+bob,(w+dw)/2f,(h+dh)/2f+bob),paint);postInvalidateDelayed(speaking?55:120);return;}
-        if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}
+        if(faceOnly){drawMinimalFace(c,w,h,d,hat,outfit);postInvalidateDelayed(speaking?55:100);return;}
         if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
         try{
             JSONObject p=model.getJSONObject("poses").getJSONObject(pose);
@@ -122,7 +122,7 @@ public class CapriCharacterView extends View {
         paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,7.8f,paint);paint.setStyle(Paint.Style.FILL);
         paint.setColor(blue);c.drawCircle(gazeX,gazeY,5.8f,paint);paint.setColor(white);c.drawCircle(gazeX-1.4f,gazeY-1.5f,1.8f,paint);c.restore();c.restore();
     }
-    private void drawMinimalFace(Canvas c,float w,float h,float d){
+    private void drawMinimalFace(Canvas c,float w,float h,float d,String hat,String outfit){
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
         float t=(SystemClock.uptimeMillis()-start)/1000f;
         float s=Math.min(w/104f,h/78f)*.92f;
@@ -138,6 +138,7 @@ public class CapriCharacterView extends View {
         paint.setColor(white);c.drawCircle(-17,-5,1.8f,paint);c.drawCircle(20,-5,1.8f,paint);
         paint.setColor(crimson);paint.setStrokeWidth(2.5f);paint.setStyle(Paint.Style.STROKE);
         Path mouth=new Path();if(speaking){float open=3+(float)Math.abs(Math.sin(t*13))*5;mouth.moveTo(-8,24);mouth.lineTo(-3,24+open);mouth.lineTo(2,24);mouth.lineTo(7,24+open*.7f);}else{mouth.moveTo(-8,24);mouth.lineTo(-3,21);mouth.lineTo(1,25);mouth.lineTo(5,21);mouth.lineTo(9,24);}c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);
+        drawAccessories(c,0,-5,0,hat,outfit);
         c.restore();
     }
     private void drawFallback(Canvas c,float w,float h,float d){
