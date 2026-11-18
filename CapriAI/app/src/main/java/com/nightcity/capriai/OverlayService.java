@@ -58,7 +58,7 @@ public class OverlayService extends Service {
         bubble.setMaxLines(5);bubble.setEllipsize(TextUtils.TruncateAt.END);
         bubble.setPadding(dp(11),dp(9),dp(11),dp(12));
         GradientDrawable bd=new GradientDrawable();bd.setColor(0xf20a0b12);bd.setCornerRadius(dp(7));bd.setStroke(dp(2),0xff28dff4);
-        bubble.setBackground(bd);bubble.setText("CAPRI: E aí, choom? Tô aqui.");
+        bubble.setBackground(bd);bubble.setText("CAPRI: Oi. Estou por aqui.");
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-1,dp(86),Gravity.TOP);
         window.addView(bubble,bp);
         gameToken=new TextView(this);gameToken.setText("◆");gameToken.setTextSize(27);gameToken.setTextColor(0xff28dff4);gameToken.setGravity(Gravity.CENTER);gameToken.setVisibility(View.GONE);gameToken.setShadowLayer(dp(8),0,0,0xff28dff4);
@@ -96,7 +96,7 @@ public class OverlayService extends Service {
                             bubble.setText("CAPRI: Opa, chamou minha atenção.");
                             lastTap=now;
                         }else getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
-                        dragging=false;scheduleMotion(2800);return true;
+                        dragging=false;return true;
                 }return true;
             }
         });
@@ -154,7 +154,7 @@ public class OverlayService extends Service {
         },d+350);
     }
     boolean canSpeakAutonomously(){
-        if(!getPrefs().getBoolean("autonomous_speech",true)||!getPrefs().getBoolean("voice_enabled",true)||getPrefs().getBoolean("do_not_disturb",false))return false;
+        if(!getPrefs().getBoolean("autonomous_speech",true)||!getPrefs().getBoolean("voice_enabled",true)||!getPrefs().getBoolean("voice_replies",true)||getPrefs().getBoolean("do_not_disturb",false))return false;
         if(getPrefs().getBoolean("quiet_hours",true)){
             java.util.Calendar now=java.util.Calendar.getInstance();int hour=now.get(java.util.Calendar.HOUR_OF_DAY);
             if(hour>=22||hour<8)return false;
