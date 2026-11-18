@@ -5,8 +5,8 @@ import java.util.Locale;
 import java.util.Random;
 
 /**
- * Compact procedural choreography library: 20 grounded actions x 50 contextual
- * variations = 1,000 distinct action plans, generated from small metadata.
+ * Compact procedural choreography library: 25 grounded actions x 50 contextual
+ * variations = 1,250 action plans, generated from reusable movement metadata.
  * The renderer reuses the four bundled body drawings and animates transforms.
  */
 public final class CapriActionEngine {
@@ -38,7 +38,12 @@ public final class CapriActionEngine {
         {"giggle","sit","feliz","*segura uma risadinha*"},
         {"lean","sit","curiosa","*se inclina para chegar mais perto do balão*"},
         {"blink","sit","neutra","*pisca e volta a prestar atenção*"},
-        {"settle","sit","neutra","*volta a se ajeitar confortavelmente*"}
+        {"settle","sit","neutra","*volta a se ajeitar confortavelmente*"},
+        {"dance","back","feliz","*faz uma dancinha curta e animada*"},
+        {"twirl","back","feliz","*dá um giro gracioso no próprio lugar*"},
+        {"bounce","sit","feliz","*dá um pulinho de empolgação*"},
+        {"curtsy","sit","envergonhada","*faz uma reverência delicada*"},
+        {"peek","crouch","curiosa","*espreita de lado para observar melhor*"}
     };
     private static final String[] DETAILS={
         "com calma","por um segundo","e volta a olhar para você","sem pressa","como quem teve uma ideia",
@@ -58,7 +63,7 @@ public final class CapriActionEngine {
     private static int lastId=-1;
     private CapriActionEngine(){}
     public static synchronized Action next(){
-        int id;do{id=RNG.nextInt(1000);}while(id==lastId);lastId=id;
+        int id;do{id=RNG.nextInt(actionCount());}while(id==lastId);lastId=id;
         int base=id/50,detail=id%50;
         String[] b=BASE[base];
         String caption=b[3]+" "+DETAILS[detail]+".";
@@ -75,7 +80,8 @@ public final class CapriActionEngine {
             "Hmm. Estou tentando decidir se descanso ou invento alguma coisa.",
             "Só passando para dizer que continuo por aqui.",
             "Hoje estou com vontade de conversar. Tem algum assunto na sua cabeça?",
-            "Vou observar um pouco e já volto com alguma ideia."
+            "Vou observar um pouco e já volto com alguma ideia.",
+            "Chum-chum! Ainda tô por aqui, viu?"
         };
         return lines[RNG.nextInt(lines.length)];
     }
