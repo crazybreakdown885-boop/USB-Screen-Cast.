@@ -76,16 +76,16 @@ public class MainActivity extends Activity {
         prompt.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEND){sendMessage();return true;}return false;});
         floatBtn.setOnClickListener(v->{
             if(OverlayService.running){
-                getPreferences(0).edit().putBoolean("overlay_enabled",false).putBoolean("overlay_pending",false).apply();
+                getSharedPreferences("capri_settings",0).edit().putBoolean("overlay_enabled",false).putBoolean("overlay_pending",false).apply();
                 stopService(new Intent(this,OverlayService.class));
                 syncOverlayButton();
                 Toast.makeText(this,"Capri guardada",Toast.LENGTH_SHORT).show();
             } else {
-                getPreferences(0).edit().putBoolean("overlay_enabled",true).putBoolean("overlay_pending",true).apply();
+                getSharedPreferences("capri_settings",0).edit().putBoolean("overlay_enabled",true).putBoolean("overlay_pending",true).apply();
                 if(!android.provider.Settings.canDrawOverlays(this)){
                     startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,android.net.Uri.parse("package:"+getPackageName())));
                 } else {
-                    getPreferences(0).edit().putBoolean("overlay_pending",false).apply();
+                    getSharedPreferences("capri_settings",0).edit().putBoolean("overlay_pending",false).apply();
                     startService(new Intent(this,OverlayService.class));
                     syncOverlayButton();
                 }
@@ -107,8 +107,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
-        if(getPreferences(0).getBoolean("overlay_enabled",false)&&android.provider.Settings.canDrawOverlays(this)&&!OverlayService.running){
-            getPreferences(0).edit().putBoolean("overlay_pending",false).apply();
+        if(getSharedPreferences("capri_settings",0).getBoolean("overlay_enabled",false)&&android.provider.Settings.canDrawOverlays(this)&&!OverlayService.running){
+            getSharedPreferences("capri_settings",0).edit().putBoolean("overlay_pending",false).apply();
             startService(new Intent(this,OverlayService.class));
         }
         applyImmersiveMode(!keyboardVisible&&!composerFocused);syncOverlayButton();
@@ -151,8 +151,8 @@ public class MainActivity extends Activity {
         try{
             if(s.startsWith("nota:")||s.startsWith("anote:")){
                 String note=q.substring(q.indexOf(':')+1).trim();if(note.isEmpty())return false;
-                java.util.Set<String> notes=new java.util.HashSet<>(getPreferences(0).getStringSet("capri_notes",new java.util.HashSet<>()));
-                notes.add(note);getPreferences(0).edit().putStringSet("capri_notes",notes).apply();
+                java.util.Set<String> notes=new java.util.HashSet<>(getSharedPreferences("capri_settings",0).getStringSet("capri_notes",new java.util.HashSet<>()));
+                notes.add(note);getSharedPreferences("capri_settings",0).edit().putStringSet("capri_notes",notes).apply();
                 String a="Anotado no seu celular, choom: "+note;addMessage("CAPRI",a,true);speak(a);return true;
             }
             if(s.startsWith("timer ")||s.startsWith("cronômetro ")||s.startsWith("cronometro ")){
