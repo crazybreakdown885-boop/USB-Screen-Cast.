@@ -134,17 +134,17 @@ public class MainActivity extends Activity {
     void typeText(TextView view,String value,int index){if(index>=value.length())return;char ch=value.charAt(index);view.append(String.valueOf(ch));if(ch!=' '&&ch!='\n'&&index%2==0)view.playSoundEffect(android.view.SoundEffectConstants.CLICK);if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));new Handler().postDelayed(()->typeText(view,value,index+1),28);}
     void sendMessage(){
         String q=prompt.getText().toString().trim();if(q.isEmpty())return;
-        prompt.setText("");addMessage("VOCÊ",q,false);
+        prompt.setText("");addMessage("VOCÊ",q,false);saveChatHistory("user",q);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(prompt.getWindowToken(),0);
         prompt.clearFocus();composerFocused=false;
         new Handler().postDelayed(()->applyImmersiveMode(true),350);
         if(handleAndroidCommand(q))return;
         String api=getSharedPreferences("capri_settings",0).getString("api_key","");
         if(getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false)&&latestScreenImage!=null){
-            new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
+            new Thread(()->{String a=askVision(api,latestScreenImage,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
         }else if(getSharedPreferences("capri_settings",0).getString("ai_provider","OpenAI-compatible").equals("Offline")){
-            String a=localReply(q);addMessage("CAPRI",a,true);speak(a);
-        }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
+            String a=localReply(q);addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);
+        }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);saveChatHistory("assistant",a);speak(a);});}).start();
     }
     boolean handleAndroidCommand(String raw){
         String q=raw.trim(),s=q.toLowerCase(Locale.ROOT);
@@ -190,6 +190,18 @@ public class MainActivity extends Activity {
     void overlaySpeaking(boolean value){
         if(!OverlayService.running)return;
         Intent i=new Intent(this,OverlayService.class).setAction(OverlayService.ACTION_SPEAK).putExtra("speaking",value);startService(i);
+    }
+    void saveChatHistory(String role,String content){
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        if(!sp.getBoolean("save_history",true))return;
+        try{
+            JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
+            history.put(new JSONObject().put("role",role).put("content",content));
+            int max=Math.max(2,sp.getInt("history_turns",10)*2);
+            JSONArray trimmed=new JSONArray();
+            for(int i=Math.max(0,history.length()-max);i<history.length();i++)trimmed.put(history.getJSONObject(i));
+            sp.edit().putString("chat_history",trimmed.toString()).apply();
+        }catch(Exception ignored){}
     }
     String localReply(String q){String s=q.toLowerCase(Locale.ROOT);if(s.contains("quem")||s.contains("capri"))return "Capri. Engram do Projeto Capricorn. Não sou exatamente uma garota comum, choom. Sou um monte de dados perigosamente interessantes com uma péssima paciência para corporações.";if(s.contains("oi")||s.contains("olá")||s.contains("eai"))return "E aí, choom! Já estava ficando entediada no ciberespaço. Manda a boa.";return "Minha conexão neural está no modo local. Configure sua chave de API para conversas completas, choom.";}
     String askApi(String api,String q){
@@ -289,6 +301,8 @@ public class MainActivity extends Activity {
     @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==7&&c==RESULT_OK&&d!=null){ArrayList<String>a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty()){prompt.setText(a.get(0));sendMessage();}}if(r==SCREEN_REQUEST&&c==RESULT_OK&&d!=null){Intent s=new Intent(this,ScreenCaptureService.class);s.putExtra("resultCode",c);s.putExtra("data",d);s.putExtra("continuous",getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false));startForegroundService(s);addMessage("SISTEMA","Permissão concedida. Capturando a tela atual...",false);}}
     void speak(String s){
         overlaySay(s);
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        if(!sp.getBoolean("voice_enabled",true)||!sp.getBoolean("voice_replies",true))return;
         if(tts==null)return;
         tts.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener(){
             final Handler h=new Handler();
