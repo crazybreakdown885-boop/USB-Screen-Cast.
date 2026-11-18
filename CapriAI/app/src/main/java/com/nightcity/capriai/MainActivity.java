@@ -238,7 +238,14 @@ public class MainActivity extends Activity {
             if(s.startsWith("abre ")||s.startsWith("abrir ")){
                 if(!getSharedPreferences("capri_settings",0).getBoolean("android_plugin",true)){String a="O módulo de ações do Android está desativado. Ative-o em PLUGINS.";addMessage("CAPRI",a,true);speak(a);return true;}
                 String target=q.substring(q.indexOf(' ')+1).trim().toLowerCase(Locale.ROOT);Intent launch;
-                if(target.contains("configura"))launch=new Intent(android.provider.Settings.ACTION_SETTINGS);
+                if(target.contains("desenvolvedor"))launch=new Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+                else if(target.contains("wifi"))launch=new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+                else if(target.contains("bluetooth"))launch=new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+                else if(target.contains("tela"))launch=new Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS);
+                else if(target.contains("som")||target.contains("áudio")||target.contains("audio"))launch=new Intent(android.provider.Settings.ACTION_SOUND_SETTINGS);
+                else if(target.contains("bateria"))launch=new Intent(android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS);
+                else if(target.contains("aplicativos"))launch=new Intent(android.provider.Settings.ACTION_APPLICATION_SETTINGS);
+                else if(target.contains("configura"))launch=new Intent(android.provider.Settings.ACTION_SETTINGS);
                 else if(target.contains("câmera")||target.contains("camera"))launch=new Intent("android.media.action.IMAGE_CAPTURE");
                 else if(target.contains("youtube"))launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://m.youtube.com"));
                 else if(target.contains("whatsapp")){launch=getPackageManager().getLaunchIntentForPackage("com.whatsapp");if(launch==null)launch=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://whatsapp.com"));}
