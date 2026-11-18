@@ -12,7 +12,7 @@ public class CapriCharacterView extends View {
     private JSONObject model;
     private String pose="sit";
     private String mood="neutra";
-    private boolean speaking=false, blink=false;
+    private boolean speaking=false, blink=false, faceOnly=false;
     private long start=SystemClock.uptimeMillis();
     private final int crimson=0xfff2154c, violet=0xff8a3dff, ink=0xff0a0710, green=0xff22f27a, blue=0xff1d6cff, white=0xffffffff;
     private final HandlerTick tick=new HandlerTick();
@@ -24,7 +24,7 @@ public class CapriCharacterView extends View {
             model=new JSONObject(out.toString("UTF-8"));
         }catch(Exception ignored){model=null;}
     }
-    public void setSpeaking(boolean value){speaking=value;invalidate();}
+    public void setSpeaking(boolean value){speaking=value;invalidate();}\n    public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
     public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("sério")||m.contains("serio"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda"))mood="irritada";else if(m.contains("?")||m.contains("curios")||m.contains("como")||m.contains("por que"))mood="curiosa";else mood="neutra";start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
     public void setPose(String value){if(value!=null&&model!=null&&model.optJSONObject("poses").has(value)){pose=value;invalidate();}}
@@ -33,7 +33,7 @@ public class CapriCharacterView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
-        if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
+        if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}\n        if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
         try{
             JSONObject p=model.getJSONObject("poses").getJSONObject(pose);
             JSONArray b=p.getJSONArray("bounds");float minX=(float)b.getDouble(0),minY=(float)b.getDouble(1),maxX=(float)b.getDouble(2),maxY=(float)b.getDouble(3);
@@ -87,6 +87,24 @@ public class CapriCharacterView extends View {
         paint.setColor(ink);c.drawPath(eye,paint);c.save();c.clipPath(eye);
         paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,6.8f,paint);paint.setStyle(Paint.Style.FILL);
         paint.setColor(blue);c.drawCircle(0,0,5,paint);paint.setColor(white);c.drawCircle(0,0,1.8f,paint);c.restore();c.restore();
+    }
+    private void drawMinimalFace(Canvas c,float w,float h,float d){
+        c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
+        float t=(SystemClock.uptimeMillis()-start)/1000f;
+        float s=Math.min(w/104f,h/78f)*.92f;
+        c.save();c.translate(w/2f,h/2f+(float)Math.sin(t*1.8f)*2*d);c.scale(s,s);
+        // Faixa angular serrilhada: recorte neon inspirado no desenho da personagem.
+        Path band=new Path();band.moveTo(-48,-16);band.lineTo(-37,-22);band.lineTo(-30,-17);band.lineTo(-23,-23);band.lineTo(-14,-18);band.lineTo(-5,-24);band.lineTo(4,-18);band.lineTo(14,-23);band.lineTo(23,-17);band.lineTo(32,-22);band.lineTo(47,-15);band.lineTo(39,-5);band.lineTo(47,5);band.lineTo(34,12);band.lineTo(25,7);band.lineTo(15,14);band.lineTo(5,8);band.lineTo(-5,15);band.lineTo(-15,8);band.lineTo(-25,14);band.lineTo(-34,7);band.lineTo(-46,12);band.lineTo(-39,1);band.close();
+        paint.setColor(violet);c.drawPath(band,paint);paint.setColor(ink);c.drawPath(band,paint);
+        paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2.1f);
+        Path eye=new Path();eye.moveTo(-34,-5);eye.lineTo(-25,-12);eye.lineTo(-8,-10);eye.lineTo(-3,-4);eye.lineTo(-11,1);eye.lineTo(-27,1);eye.close();
+        Path eye2=new Path();eye2.moveTo(4,-4);eye2.lineTo(10,-10);eye2.lineTo(27,-12);eye2.lineTo(35,-5);eye2.lineTo(28,1);eye2.lineTo(12,1);eye2.close();
+        c.drawPath(eye,paint);c.drawPath(eye2,paint);paint.setStyle(Paint.Style.FILL);
+        paint.setColor(blue);c.drawOval(-23,-8,-13,-1,paint);c.drawOval(14,-8,24,-1,paint);
+        paint.setColor(white);c.drawCircle(-17,-5,1.8f,paint);c.drawCircle(20,-5,1.8f,paint);
+        paint.setColor(crimson);paint.setStrokeWidth(2.5f);paint.setStyle(Paint.Style.STROKE);
+        Path mouth=new Path();if(speaking){float open=3+(float)Math.abs(Math.sin(t*13))*5;mouth.moveTo(-8,24);mouth.lineTo(-3,24+open);mouth.lineTo(2,24);mouth.lineTo(7,24+open*.7f);}else{mouth.moveTo(-8,24);mouth.lineTo(-3,21);mouth.lineTo(1,25);mouth.lineTo(5,21);mouth.lineTo(9,24);}c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);
+        c.restore();
     }
     private void drawFallback(Canvas c,float w,float h,float d){
         paint.setColor(crimson);c.drawCircle(w/2,h/2,Math.min(w,h)*.3f,paint);
