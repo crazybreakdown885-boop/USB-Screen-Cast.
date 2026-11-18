@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
     int pink=0xffff315f, green=0xff00ef83, cyan=0xff35d9f5, bg=0xff05090d, panel=0xff080f17;
     boolean keyboardVisible=false;
     boolean composerFocused=false;
+    String latestScreenImage=null;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -43,7 +44,7 @@ public class MainActivity extends Activity {
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); floatBtn=smallButton("◉ FLUTUAR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
-        read.setOnClickListener(v->requestScreenRead());
+        read.setOnClickListener(v->toggleScreenContext());
         capriFace=new CapriCharacterView(this);
         LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(300)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
@@ -92,7 +93,7 @@ public class MainActivity extends Activity {
         });
         syncOverlayButton();
         handleLaunchIntent(getIntent());
-        screenReceiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){String b64=i.getStringExtra("image");if(b64!=null)askAboutScreen(b64);}};
+        screenReceiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){String b64=i.getStringExtra("image");if(b64!=null){latestScreenImage=b64;if(!getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false))askAboutScreen(b64);}}};
         if(Build.VERSION.SDK_INT>=33)registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"),Context.RECEIVER_NOT_EXPORTED);else registerReceiver(screenReceiver,new IntentFilter("com.nightcity.capriai.SCREEN_CAPTURED"));
     }
     void applyImmersiveMode(boolean immersive){
@@ -139,8 +140,11 @@ public class MainActivity extends Activity {
         new Handler().postDelayed(()->applyImmersiveMode(true),350);
         if(handleAndroidCommand(q))return;
         String api=getSharedPreferences("capri_settings",0).getString("api_key","");
-        if(api.isEmpty()){String a=localReply(q);addMessage("CAPRI",a,true);speak(a);}
-        else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
+        if(getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false)&&latestScreenImage!=null){
+            new Thread(()->{String a=askVision(api,latestScreenImage);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
+        }else if(getSharedPreferences("capri_settings",0).getString("ai_provider","OpenAI-compatible").equals("Offline")){
+            String a=localReply(q);addMessage("CAPRI",a,true);speak(a);
+        }else new Thread(()->{String a=askApi(api,q);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();
     }
     boolean handleAndroidCommand(String raw){
         String q=raw.trim(),s=q.toLowerCase(Locale.ROOT);
@@ -232,8 +236,17 @@ public class MainActivity extends Activity {
     }
     void askAboutScreen(String b64){String api=getPreferences(0).getString("api_key","");if(api.isEmpty()){addMessage("CAPRI","A captura chegou, mas preciso da chave de API para analisar o conteúdo visual.",true);return;}addMessage("SISTEMA","Captura de tela recebida. Analisando...",false);new Thread(()->{String a=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();}
     String askVision(String api,String b64){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL("https://api.openai.com/v1/chat/completions").openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Authorization","Bearer "+api);c.setRequestProperty("Content-Type","application/json");JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Descreva o que está visível na captura de tela e ajude o usuário com base nela. Responda em português brasileiro como Capri, de forma objetiva." )).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, assistente útil em português brasileiro.")).put(new JSONObject().put("role","user").put("content",content));JSONObject body=new JSONObject().put("model","gpt-4o-mini").put("messages",msgs).put("max_tokens",500);try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}InputStream is=c.getResponseCode()<400?c.getInputStream():c.getErrorStream();ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[4096];int n;while((n=is.read(buf))>0)out.write(buf,0,n);if(c.getResponseCode()>=400)return "Não consegui analisar essa tela ("+c.getResponseCode()+").";return new JSONObject(out.toString("UTF-8")).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");}catch(Exception e){return "Erro ao analisar a tela: "+e.getMessage();}finally{if(c!=null)c.disconnect();}}
-    void requestScreenRead(){if(getPreferences(0).getString("api_key","").isEmpty()){addMessage("CAPRI","Primeiro configure sua chave de API. Depois toque em LER TELA e autorize a captura do Android.",true);return;}MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),SCREEN_REQUEST);}
-    @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==7&&c==RESULT_OK&&d!=null){ArrayList<String>a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty()){prompt.setText(a.get(0));sendMessage();}}if(r==SCREEN_REQUEST&&c==RESULT_OK&&d!=null){Intent s=new Intent(this,ScreenCaptureService.class);s.putExtra("resultCode",c);s.putExtra("data",d);startForegroundService(s);addMessage("SISTEMA","Permissão concedida. Capturando a tela atual...",false);}}
+    void toggleScreenContext(){
+        if(ScreenCaptureService.active){startService(new Intent(this,ScreenCaptureService.class).setAction(ScreenCaptureService.ACTION_STOP));latestScreenImage=null;Toast.makeText(this,"Visão da tela pausada",Toast.LENGTH_SHORT).show();return;}
+        requestScreenRead();
+    }
+    void requestScreenRead(){
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        if(sp.getString("ai_provider","OpenAI-compatible").equals("Offline")){addMessage("CAPRI","Escolha um modelo com visão nas configurações para eu enxergar a tela.",true);return;}
+        if(!sp.getString("ai_provider","OpenAI-compatible").equals("Ollama local")&&sp.getString("api_key","").isEmpty()){addMessage("CAPRI","Configure sua chave de API antes de ativar minha visão.",true);return;}
+        MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),SCREEN_REQUEST);
+    }
+    @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==7&&c==RESULT_OK&&d!=null){ArrayList<String>a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty()){prompt.setText(a.get(0));sendMessage();}}if(r==SCREEN_REQUEST&&c==RESULT_OK&&d!=null){Intent s=new Intent(this,ScreenCaptureService.class);s.putExtra("resultCode",c);s.putExtra("data",d);s.putExtra("continuous",getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false));startForegroundService(s);addMessage("SISTEMA","Permissão concedida. Capturando a tela atual...",false);}}
     void speak(String s){
         overlaySay(s);
         if(tts==null)return;
