@@ -10,6 +10,7 @@ import android.view.*;
 import android.widget.*;
 
 public class OverlayService extends Service {
+    public static boolean running=false;
     WindowManager wm;
     ImageView avatar;
     WindowManager.LayoutParams params;
@@ -17,6 +18,7 @@ public class OverlayService extends Service {
     @Override public IBinder onBind(Intent i){return null;}
     @Override public void onCreate(){
         super.onCreate();
+        running=true;
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         avatar=new ImageView(this);
         avatar.setImageResource(R.drawable.ic_capri);
@@ -54,5 +56,5 @@ public class OverlayService extends Service {
         });
         wm.addView(avatar,params);
     }
-    @Override public void onDestroy(){if(avatar!=null&&wm!=null)wm.removeView(avatar);super.onDestroy();}
+    @Override public void onDestroy(){running=false;if(avatar!=null&&wm!=null)wm.removeView(avatar);super.onDestroy();}
 }
