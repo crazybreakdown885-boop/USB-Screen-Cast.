@@ -1,6 +1,6 @@
-# Capri AI Android 0.9.1 — versão de lançamento
+# Capri AI Android 0.9.2 — versão de lançamento
 
-O APK publicado na release `capri-v0.9.1` é gerado exclusivamente pelo módulo `CapriAI`.
+O APK publicado na release `capri-v0.9.2` é gerado exclusivamente pelo módulo `CapriAI`.
 
 Adaptação Android independente e experimental da personagem Capri. Compatível com Android 10 ou superior e builds ARMv7/ARM64.
 
@@ -12,7 +12,7 @@ Adaptação Android independente e experimental da personagem Capri. Compatível
 - Sincronização do humor da conversa com a personagem flutuante.
 - Interface e configurações em português brasileiro.
 - Conversa com API compatível com OpenAI; a chave é inserida pelo usuário.
-- **A chave da API aparece em texto visível nas configurações**, sem ser substituída por pontos.
+- **A chave da API aparece em texto visível nas configurações**, sem ser substituída por pontos. O botão **TESTAR CONEXÃO DA API** valida a chave antes de iniciar a conversa.
 - Voz de saída pelo TextToSpeech do Android e entrada por reconhecimento de voz.
 - Comandos Android básicos, como abrir configurações/câmera, pesquisar, timer e notas locais.
 - Captura pontual de tela via MediaProjection, sempre com confirmação explícita do Android.
@@ -52,11 +52,15 @@ O workflow `.github/workflows/capri-ai-android.yml` gera o APK debug para ARMv7 
 ### Versão 0.9.0
 - Inicialização padrão no modo Offline, sem exigir chave de API.
 - O modo Offline oferece respostas locais básicas e comandos Android; não equivale a um modelo generativo completo.
-- Sobreposição reposicionável por arraste, com posição salva entre sessões.
+- Sobreposição reposicionável por arraste e movimento livre automático, com deslocamento suave pela tela e posição salva entre sessões.
+- Teleporte visual com desaparecimento e reaparecimento em outro ponto da tela.
+- Mudança automática entre poses e modo rosto/corpo; movimento, teleporte e metamorfose podem ser desligados nas configurações.
+- Teste de conexão da API diretamente nas configurações e mensagens de erro HTTP mais específicas.
+- Se uma chave estiver salva mas o provedor estiver Offline, as configurações passam automaticamente para OpenAI-compatible ao salvar.
 - Toque na personagem sobreposta alterna entre corpo completo e modo rosto minimalista com faixa serrilhada, olhos e boca.
 - Poses disponíveis nas configurações: sentada, deitada, agachada e de costas.
 - Ícone do aplicativo usa o retrato da Capri.
 - Interface segue o estilo de terminal neon da personagem.
 
-### Versão 0.9.1
+### Versão 0.9.2
 - Campo da chave API configurado para mostrar letras e números em texto normal, sem pontos.
