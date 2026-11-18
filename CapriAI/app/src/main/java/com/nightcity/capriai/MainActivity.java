@@ -228,7 +228,11 @@ public class MainActivity extends Activity {
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
             if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
             JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma companheira digital inspirada em Cyberpunk: Edgerunners 2. Fale em português brasileiro, com humor ácido, inteligência e gírias leves de Night City. Seja útil e concisa."));
-            msgs.put(new JSONObject().put("role","user").put("content",q));
+            try{
+                JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
+                for(int i=0;i<history.length();i++){JSONObject item=history.getJSONObject(i);msgs.put(new JSONObject().put("role",item.optString("role","user")).put("content",item.optString("content","")));}
+                if(history.length()==0)msgs.put(new JSONObject().put("role","user").put("content",q));
+            }catch(Exception ex){msgs.put(new JSONObject().put("role","user").put("content",q));}
             JSONObject body=provider.equals("Ollama local")
                 ?new JSONObject().put("model",model.isEmpty()?"llama3.2":model).put("messages",msgs).put("stream",false)
                 :new JSONObject().put("model",model.isEmpty()?"gpt-4o-mini":model).put("messages",msgs).put("max_tokens",700);
