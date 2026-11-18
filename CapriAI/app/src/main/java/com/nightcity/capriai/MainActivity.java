@@ -37,8 +37,9 @@ public class MainActivity extends Activity {
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
         TextView brand=label("CAPRI  //  NIGHT CITY",18,Color.WHITE); brand.setTypeface(null,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        Button settings=smallButton("⚙ API"); Button floatBtn=smallButton("◉ FLUTUAR");
-        head.addView(settings); head.addView(floatBtn); root.addView(head);
+        Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); Button floatBtn=smallButton("◉ FLUTUAR");
+        head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
+        read.setOnClickListener(v->requestScreenRead());
         capriFace=new CapriFaceView(this);
         LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(184)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
