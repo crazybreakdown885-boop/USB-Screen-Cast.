@@ -28,7 +28,10 @@ public class OverlayService extends Service {
     @Override public void onCreate(){
         super.onCreate();running=true;wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         window=new FrameLayout(this);window.setClipChildren(false);window.setClipToPadding(false);
-        character=new CapriCharacterView(this);\n        android.content.SharedPreferences saved=getSharedPreferences("capri_settings",0);\n        character.setFaceOnly(saved.getBoolean("face_only",false));\n        character.setPose(saved.getString("character_pose","sit"));
+        character=new CapriCharacterView(this);
+        android.content.SharedPreferences saved=getSharedPreferences("capri_settings",0);
+        character.setFaceOnly(saved.getBoolean("face_only",false));
+        character.setPose(saved.getString("character_pose","sit"));
         FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,dp(245),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
         window.addView(character,cp);
         bubble=new TextView(this);bubble.setTextColor(0xffd5efff);bubble.setTextSize(11);
@@ -38,7 +41,8 @@ public class OverlayService extends Service {
         GradientDrawable bd=new GradientDrawable();bd.setColor(0xf20a0b12);bd.setCornerRadius(dp(7));bd.setStroke(dp(2),0xff28dff4);
         bubble.setBackground(bd);bubble.setText("CAPRI: E aí, choom? Tô aqui.");
         FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-1,dp(86),Gravity.TOP);
-        window.addView(bubble,bp);\n        bubble.setOnClickListener(v->{Intent a=new Intent(OverlayService.this,MainActivity.class);a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(a);});
+        window.addView(bubble,bp);
+        bubble.setOnClickListener(v->{Intent a=new Intent(OverlayService.this,MainActivity.class);a.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);startActivity(a);});
         int type=WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         params=new WindowManager.LayoutParams(dp(205),dp(335),type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
