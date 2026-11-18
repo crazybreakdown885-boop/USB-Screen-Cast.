@@ -51,6 +51,7 @@ public class CapriSettingsActivity extends Activity {
         section("VOZ / PORTUGUÊS BRASILEIRO");
         TextView voiceInfo=text("VOZ NEURAL ONLINE: usa Gemini TTS, não a voz instalada no celular. Selecione Google Gemini em CONVERSA / MODELO e use uma chave Gemini válida. A voz é sintética e original; não imita uma dubladora sem autorização.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
         check("Usar voz neural online (sem voz padrão do celular)","cloud_voice",true);
+        EditText geminiVoiceKey=field("Chave API Gemini para gerar a voz");geminiVoiceKey.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);geminiVoiceKey.setText(ApiKeyStore.getGemini(this));row("Chave Gemini TTS (armazenada criptografada)",geminiVoiceKey);
         String[] voiceNames={"Leda","Kore","Aoede","Zephyr","Puck","Fenrir","Callirrhoe","Autonoe","Enceladus","Iapetus","Umbriel","Algieba","Despina","Erinome","Algenib","Rasalgethi","Laomedeia","Achernar","Alnilam","Schedar","Gacrux","Pulcherrima","Achird","Zubenelgenubi","Vindemiatrix","Sadachbia","Sadaltager","Sulafat"};
         Spinner voiceChoice=new Spinner(this);voiceChoice.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,voiceNames));String savedVoice=prefs.getString("voice_name","Leda");int vi=java.util.Arrays.asList(voiceNames).indexOf(savedVoice);voiceChoice.setSelection(vi<0?0:vi);row("Voz neural",voiceChoice);
         check("Ativar fala da Capri","voice_enabled",true);
@@ -93,6 +94,7 @@ public class CapriSettingsActivity extends Activity {
             if("Offline".equals(p)&&!enteredKey.isEmpty())p="OpenAI-compatible";
             try {
                 ApiKeyStore.save(this,enteredKey);
+                ApiKeyStore.saveGemini(this,geminiVoiceKey.getText().toString());
                 prefs.edit().remove("api_key").putString("ai_provider",p).putString("ai_model",model.getText().toString().trim()).putString("ai_endpoint",endpoint.getText().toString().trim()).putString("character_pose",poses[pose.getSelectedItemPosition()]).putString("voice_name",voiceNames[voiceChoice.getSelectedItemPosition()]).apply();
                 Toast.makeText(this,enteredKey.isEmpty()?"Chave removida. Modo offline disponível.":"Chave salva com criptografia. Capri pronta para conectar online.",Toast.LENGTH_LONG).show();finish();
             } catch(Exception ex) {
