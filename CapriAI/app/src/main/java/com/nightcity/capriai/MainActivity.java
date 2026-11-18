@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
     String latestScreenImage=null;
     final Handler idleMotionHandler=new Handler(Looper.getMainLooper());
     final Random idleMotionRandom=new Random();
-    final Runnable idleMotion=new Runnable(){public void run(){if(capriFace==null)return;if(!keyboardVisible&&!composerFocused)animateCapriIdle();idleMotionHandler.postDelayed(this,6500+idleMotionRandom.nextInt(4500));}};
+    final Runnable idleMotion=new Runnable(){public void run(){if(capriFace==null)return;if(!keyboardVisible&&!composerFocused)animateCapriIdle();idleMotionHandler.postDelayed(this,45000+idleMotionRandom.nextInt(45000));}};
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
         applyImmersiveMode(true);
         LinearLayout root=new LinearLayout(this); root.setOrientation(1); root.setPadding(14,8,14,8); root.setBackgroundColor(bg);
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
-        TextView brand=label("CAPRI // NIGHT CITY",16,cyan); brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
+        TextView brand=label("CAPRI // COMPANHEIRA DIGITAL",14,cyan); brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
         Button settings=smallButton("⚙ CONFIG"); Button read=smallButton("▣ TELA"); readBtn=read; floatBtn=smallButton("◉ SOBREPOR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
@@ -51,11 +51,11 @@ public class MainActivity extends Activity {
         capriFace=new CapriCharacterView(this);
         LinearLayout.LayoutParams faceLp=new LinearLayout.LayoutParams(-1,dp(300)); faceLp.setMargins(0,0,0,8);
         root.addView(capriFace,faceLp);
-        TextView tagline=label("◆ ENGRAM INTERFACE / ONLINE ◆",10,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
+        TextView tagline=label("◆ PRESENTE / ATENTA / ONLINE QUANDO CONECTADA ◆",9,green); tagline.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tagline.setGravity(Gravity.CENTER); root.addView(tagline);
         scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false);
         messages=new LinearLayout(this); messages.setOrientation(1); messages.setPadding(0,8,0,8); scroll.addView(messages);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        addMessage("CAPRI","Finalmente. Achei que você tinha me deixado presa num shard velho. E aí, choom?",true);
+        addMessage("CAPRI","Oi. Que bom que você voltou. Vou ficar por aqui com você.",true);
         settings.setOnClickListener(v->startActivity(new Intent(this,CapriSettingsActivity.class)));
         LinearLayout composer=new LinearLayout(this); composer.setGravity(Gravity.CENTER_VERTICAL); composer.setPadding(6,4,6,4); composer.setBackground(new GradientBox(panel));
         prompt=field("Mensagem para Capri..."); prompt.setSingleLine(true); prompt.setTypeface(Typeface.MONOSPACE); prompt.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
@@ -133,20 +133,29 @@ public class MainActivity extends Activity {
     }
     void animateCapriIdle(){
         if(capriFace==null)return;
+        CapriActionEngine.Action action=CapriActionEngine.next();
         capriFace.animate().cancel();
         float base=getSharedPreferences("capri_settings",0).getInt("character_scale",100)/100f;
-        int act=idleMotionRandom.nextInt(6);
-        capriFace.setFaceOnly(false);
-        String[] poses={"sit","lie","crouch","back"};
-        switch(act){
-            case 0: capriFace.setPose("back");capriFace.animate().translationY(-dp(22)).translationX(dp(24)).rotation(-7f).scaleX(base*1.05f).scaleY(base*.94f).setDuration(850).start();break;
-            case 1: capriFace.setPose("lie");capriFace.animate().translationY(dp(12)).translationX(-dp(18)).rotation(5f).scaleX(base*1.08f).scaleY(base*.94f).setDuration(950).start();break;
-            case 2: capriFace.setPose("crouch");capriFace.animate().translationY(-dp(12)).translationX(-dp(22)).rotation(-9f).setDuration(350).withEndAction(()->capriFace.animate().translationX(dp(22)).rotation(9f).setDuration(350).start()).start();break;
-            case 3: capriFace.setPose("back");capriFace.animate().translationY(-dp(28)).rotation(13f).setDuration(320).withEndAction(()->capriFace.animate().rotation(-13f).setDuration(320).withEndAction(()->capriFace.animate().rotation(0f).translationY(0f).setDuration(320).start()).start()).start();break;
-            case 4: capriFace.setPose("sit");capriFace.animate().translationY(dp(45)).translationX(dp(8)).scaleX(base*.98f).scaleY(base*.98f).setDuration(650).start();break;
-            default: capriFace.setPose(poses[idleMotionRandom.nextInt(poses.length)]);capriFace.animate().translationY(-dp(48)).setDuration(250).withEndAction(()->capriFace.animate().translationY(0).setDuration(250).withEndAction(()->capriFace.animate().translationY(-dp(32)).setDuration(220).withEndAction(()->capriFace.animate().translationY(0).setDuration(220).start()).start()).start()).start();break;
+        capriFace.setFaceOnly(false);capriFace.setPose(action.pose);capriFace.setMood(action.mood);
+        long d=action.duration;
+        switch(action.kind){
+            case "stretch":capriFace.animate().translationY(-dp(22)).scaleX(base*1.04f).scaleY(base*.96f).rotation(-3f).setDuration(d).start();break;
+            case "look":case "read":case "lean":case "listen":case "think":case "lookup":
+                capriFace.animate().translationY(-dp(8)).translationX(dp(7)).rotation(-4f).setDuration(d).start();break;
+            case "hair":case "wave":capriFace.animate().rotation(5f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).setDuration(d/2).start()).start();break;
+            case "yawn":case "rest":capriFace.animate().translationY(dp(10)).scaleY(base*.97f).rotation(2f).setDuration(d).start();break;
+            case "smile":case "giggle":case "nod":
+                capriFace.animate().translationY(-dp(8)).rotation(-2f).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).rotation(0).setDuration(d/2).start()).start();break;
+            case "shrug":case "fidget":
+                capriFace.animate().rotation(4f).translationX(dp(4)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-3f).translationX(-dp(3)).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).translationX(0f).setDuration(d/3).start()).start()).start();break;
+            case "crouch":capriFace.animate().translationY(dp(10)).scaleY(base*.94f).setDuration(d).start();break;
+            case "sway":
+                android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
+                if(audio!=null&&audio.isMusicActive())capriFace.animate().rotation(7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(-7f).setDuration(d/2).withEndAction(()->capriFace.animate().rotation(0f).setDuration(d/3).start()).start()).start();
+                else capriFace.animate().translationY(-dp(4)).setDuration(d).start();break;
+            default:capriFace.animate().translationY(-dp(5)).setDuration(d/2).withEndAction(()->capriFace.animate().translationY(0).setDuration(d/2).start()).start();break;
         }
-        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(600).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));capriFace.setFaceOnly(getSharedPreferences("capri_settings",0).getBoolean("face_only",false));}},4300);
+        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(450).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));capriFace.setFaceOnly(getSharedPreferences("capri_settings",0).getBoolean("face_only",false));}},d+350);
     }
     @Override protected void onPause(){idleMotionHandler.removeCallbacks(idleMotion);super.onPause();}
     @Override protected void onResume(){
@@ -179,6 +188,7 @@ public class MainActivity extends Activity {
     void typeText(TextView view,String value,int index){if(index>=value.length())return;char ch=value.charAt(index);view.append(String.valueOf(ch));if(ch!=' '&&ch!='\n'&&index%2==0)view.playSoundEffect(android.view.SoundEffectConstants.CLICK);if(scroll!=null)scroll.post(()->scroll.fullScroll(View.FOCUS_DOWN));new Handler().postDelayed(()->typeText(view,value,index+1),28);}
     void sendMessage(){
         String q=prompt.getText().toString().trim();if(q.isEmpty())return;
+        getSharedPreferences("capri_settings",0).edit().putLong("last_user_interaction",System.currentTimeMillis()).apply();
         prompt.setText("");addMessage("VOCÊ",q,false);saveChatHistory("user",q);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(prompt.getWindowToken(),0);
         prompt.clearFocus();composerFocused=false;
@@ -267,7 +277,7 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri: uma mulher adulta, irreverente, esperta, observadora e emocionalmente expressiva, com atitude de quem cresceu em Night City. Converse em português brasileiro natural e atual. Soe como alguém falando de verdade, não como personagem fazendo uma apresentação: varie o tamanho das frases, use humor e sarcasmo quando couber, demonstre carinho, impaciência, curiosidade ou surpresa conforme a conversa. Não force gírias, bordões, referências cyberpunk ou provocações; use-os só quando surgirem naturalmente. Não repita o nome do usuário nem explique sua personalidade. Seja direta, espontânea e útil. Ao falar de si, use o feminino. Não invente intimidade nem fique teatral. Mantenha falas originais. Usuário: "+q));
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk, choom ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu. Usuário: "+q));
                 JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
                 try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
                 int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
@@ -278,7 +288,7 @@ public class MainActivity extends Activity {
             else {if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
             c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
             if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
-            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri: uma mulher adulta, irreverente, esperta, observadora e emocionalmente expressiva, com atitude de quem cresceu em Night City. Converse em português brasileiro natural e atual. Soe como alguém falando de verdade, não como personagem fazendo uma apresentação: varie o tamanho das frases, use humor e sarcasmo quando couber, demonstre carinho, impaciência, curiosidade ou surpresa conforme a conversa. Não force gírias, bordões, referências cyberpunk ou provocações; use-os só quando surgirem naturalmente. Não repita o nome do usuário nem explique sua personalidade. Seja direta, espontânea e útil. Ao falar de si, use o feminino. Não invente intimidade nem fique teatral. Mantenha falas originais."));
+            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk, choom ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu."));
             try{
                 JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
                 for(int i=0;i<history.length();i++){JSONObject item=history.getJSONObject(i);msgs.put(new JSONObject().put("role",item.optString("role","user")).put("content",item.optString("content","")));}
