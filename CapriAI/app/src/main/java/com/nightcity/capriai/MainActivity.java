@@ -250,7 +250,7 @@ public class MainActivity extends Activity {
             }catch(Exception ex){msgs.put(new JSONObject().put("role","user").put("content",q));}
             JSONObject body=provider.equals("Ollama local")
                 ?new JSONObject().put("model",model.isEmpty()?"llama3.2":model).put("messages",msgs).put("stream",false)
-                :new JSONObject().put("model",model.isEmpty()?"gpt-4o-mini":model).put("messages",msgs).put("max_tokens",700);
+                :new JSONObject().put("model",model.isEmpty()?"gpt-4o-mini":model).put("messages",msgs).put("max_completion_tokens",700);
             try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
             int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
             if(status==401)return "A OpenAI recusou a chave (401). Confira se ela foi criada em platform.openai.com, está ativa e pertence a um projeto com faturamento configurado. O ChatGPT Plus não inclui créditos da API. Detalhe: "+raw.substring(0,Math.min(220,raw.length()));
@@ -300,7 +300,7 @@ public class MainActivity extends Activity {
             }else{
                 JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Você é Capri. "+question+" Responda em português brasileiro, de forma direta.")).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));
                 JSONArray msgs=new JSONArray().put(new JSONObject().put("role","user").put("content",content));
-                body=new JSONObject().put("model",model).put("messages",msgs).put("max_tokens",600);
+                body=new JSONObject().put("model",model).put("messages",msgs).put("max_completion_tokens",600);
             }
             try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
             int status=c.getResponseCode();String raw=readAll(status<400?c.getInputStream():c.getErrorStream());if(status>=400)return "Não consegui analisar essa tela ("+status+").";
