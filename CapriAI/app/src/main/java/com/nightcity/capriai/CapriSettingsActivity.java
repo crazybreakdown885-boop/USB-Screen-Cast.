@@ -50,6 +50,7 @@ public class CapriSettingsActivity extends Activity {
         section("PRIVACY");
         check("Ask before reading the screen","screen_confirm",true);
         check("Allow screen context when I request it","screen_context",true);
+        check("Keep screen context active while Capri is open","screen_monitor",false);
         check("Send screen images only after I ask","screen_on_demand",true);
         TextView privacy=text("Screen capture is requested through Android MediaProjection. The system shows its own consent prompt and capture indicator. Images are sent to the selected AI provider only when you request screen analysis.",11,0xffa8a5b5);privacy.setPadding(0,dp(4),0,dp(12));page.addView(privacy);
         section("SYSTEM");
