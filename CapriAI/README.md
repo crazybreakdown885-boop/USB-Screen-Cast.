@@ -64,3 +64,11 @@ O workflow `.github/workflows/capri-ai-android.yml` gera o APK debug para ARMv7 
 
 ### Versão 0.9.2
 - Campo da chave API configurado para mostrar letras e números em texto normal, sem pontos.
+
+
+## 0.9.11 development update
+
+- Offline arcade: reflex, memory sequence, and tic-tac-toe against Capri.
+- Android controls hub: media/call/alarm volume, brightness after Android's special user approval, and shortcuts to official connectivity, display, battery, accessibility, and app-management panels.
+- Neural speech: Gemini TTS with selectable built-in voices, optional custom `voice_...` ID, expressive Brazilian Portuguese delivery, and a separate API key encrypted with Android Keystore. Device-default TTS is not used by default.
+- Character art import: select a licensed PNG/WebP from device storage; imported artwork replaces the procedural geometric portrait.
