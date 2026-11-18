@@ -188,7 +188,48 @@ public class MainActivity extends Activity {
         Intent i=new Intent(this,OverlayService.class).setAction(OverlayService.ACTION_SPEAK).putExtra("speaking",value);startService(i);
     }
     String localReply(String q){String s=q.toLowerCase(Locale.ROOT);if(s.contains("quem")||s.contains("capri"))return "Capri. Engram do Projeto Capricorn. Não sou exatamente uma garota comum, choom. Sou um monte de dados perigosamente interessantes com uma péssima paciência para corporações.";if(s.contains("oi")||s.contains("olá")||s.contains("eai"))return "E aí, choom! Já estava ficando entediada no ciberespaço. Manda a boa.";return "Minha conexão neural está no modo local. Configure sua chave de API para conversas completas, choom.";}
-    String askApi(String api,String q){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL("https://api.openai.com/v1/chat/completions").openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(30000);c.setDoOutput(true);c.setRequestProperty("Authorization","Bearer "+api);c.setRequestProperty("Content-Type","application/json");JSONObject sys=new JSONObject().put("role","system").put("content","Você é Capri (Capricorn), um engrama digital do universo Cyberpunk: Edgerunners 2. Fale em português brasileiro, com humor ácido, inteligência, curiosidade, atitude provocadora e gírias leves de Night City como choom. Seja útil e concisa. Não finja ser oficial.");JSONArray msgs=new JSONArray().put(sys).put(new JSONObject().put("role","user").put("content",q));JSONObject body=new JSONObject().put("model","gpt-4o-mini").put("messages",msgs);try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}InputStream is=c.getResponseCode()<400?c.getInputStream():c.getErrorStream();ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[4096];int n;while((n=is.read(buf))>0)out.write(buf,0,n);if(c.getResponseCode()>=400)return "Falha de conexão ("+c.getResponseCode()+"). Confere a chave, choom.";return new JSONObject(out.toString("UTF-8")).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");}catch(Exception e){return "Deu ruim na conexão neural: "+e.getMessage();}finally{if(c!=null)c.disconnect();}}
+    String askApi(String api,String q){
+        android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+        String provider=sp.getString("ai_provider","OpenAI-compatible");
+        String model=sp.getString("ai_model","gpt-4o-mini");
+        String base=sp.getString("ai_endpoint","https://api.openai.com/v1").trim();
+        if(provider.equals("Offline"))return localReply(q);
+        HttpURLConnection c=null;
+        try{
+            if(provider.equals("Google Gemini")){
+                if(model.isEmpty())model="gemini-2.0-flash";
+                URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
+                c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
+                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, companheira digital de Night City. Responda em português brasileiro, com personalidade espirituosa, irônica, calorosa e útil. Chame o usuário de choom ocasionalmente. Seja objetiva. Usuário: "+q));
+                JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
+                try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+                int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
+                if(status>=400)return "Falha no Gemini ("+status+"): "+raw.substring(0,Math.min(180,raw.length()));
+                return new JSONObject(raw).getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text");
+            }
+            if(provider.equals("Ollama local")){if(base.isEmpty())base="http://127.0.0.1:11434";if(!base.endsWith("/api/chat"))base=base.replaceAll("/+$","")+"/api/chat";}
+            else {if(base.isEmpty())base="https://api.openai.com/v1";if(!base.endsWith("/chat/completions"))base=base.replaceAll("/+$","")+"/chat/completions";}
+            c=(HttpURLConnection)new URL(base).openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
+            if(!api.isEmpty())c.setRequestProperty("Authorization","Bearer "+api);
+            JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, uma companheira digital inspirada em Cyberpunk: Edgerunners 2. Fale em português brasileiro, com humor ácido, inteligência e gírias leves de Night City. Seja útil e concisa."));
+            msgs.put(new JSONObject().put("role","user").put("content",q));
+            JSONObject body=provider.equals("Ollama local")
+                ?new JSONObject().put("model",model.isEmpty()?"llama3.2":model).put("messages",msgs).put("stream",false)
+                :new JSONObject().put("model",model.isEmpty()?"gpt-4o-mini":model).put("messages",msgs).put("max_tokens",700);
+            try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
+            int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
+            if(status>=400)return "Falha de conexão ("+status+"): "+raw.substring(0,Math.min(180,raw.length()));
+            JSONObject result=new JSONObject(raw);
+            if(provider.equals("Ollama local"))return result.getJSONObject("message").getString("content");
+            return result.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
+        }catch(Exception e){return "Deu ruim na conexão neural: "+e.getMessage();}
+        finally{if(c!=null)c.disconnect();}
+    }
+    String readAll(InputStream in)throws Exception{
+        ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[4096];int n;
+        while((n=in.read(b))>0)out.write(b,0,n);
+        return out.toString("UTF-8");
+    }
     void askAboutScreen(String b64){String api=getPreferences(0).getString("api_key","");if(api.isEmpty()){addMessage("CAPRI","A captura chegou, mas preciso da chave de API para analisar o conteúdo visual.",true);return;}addMessage("SISTEMA","Captura de tela recebida. Analisando...",false);new Thread(()->{String a=askVision(api,b64);runOnUiThread(()->{addMessage("CAPRI",a,true);speak(a);});}).start();}
     String askVision(String api,String b64){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL("https://api.openai.com/v1/chat/completions").openConnection();c.setRequestMethod("POST");c.setConnectTimeout(20000);c.setReadTimeout(60000);c.setDoOutput(true);c.setRequestProperty("Authorization","Bearer "+api);c.setRequestProperty("Content-Type","application/json");JSONArray content=new JSONArray().put(new JSONObject().put("type","text").put("text","Descreva o que está visível na captura de tela e ajude o usuário com base nela. Responda em português brasileiro como Capri, de forma objetiva." )).put(new JSONObject().put("type","image_url").put("image_url",new JSONObject().put("url","data:image/jpeg;base64,"+b64)));JSONArray msgs=new JSONArray().put(new JSONObject().put("role","system").put("content","Você é Capri, assistente útil em português brasileiro.")).put(new JSONObject().put("role","user").put("content",content));JSONObject body=new JSONObject().put("model","gpt-4o-mini").put("messages",msgs).put("max_tokens",500);try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}InputStream is=c.getResponseCode()<400?c.getInputStream():c.getErrorStream();ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[4096];int n;while((n=is.read(buf))>0)out.write(buf,0,n);if(c.getResponseCode()>=400)return "Não consegui analisar essa tela ("+c.getResponseCode()+").";return new JSONObject(out.toString("UTF-8")).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");}catch(Exception e){return "Erro ao analisar a tela: "+e.getMessage();}finally{if(c!=null)c.disconnect();}}
     void requestScreenRead(){if(getPreferences(0).getString("api_key","").isEmpty()){addMessage("CAPRI","Primeiro configure sua chave de API. Depois toque em LER TELA e autorize a captura do Android.",true);return;}MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),SCREEN_REQUEST);}
