@@ -21,8 +21,8 @@ public final class ApiKeyStore {
     private static SecretKey getOrCreateKey(String alias) throws Exception {
         KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
         ks.load(null);
-        if (ks.containsAlias(ALIAS)) {
-            return ((KeyStore.SecretKeyEntry) ks.getEntry(ALIAS, null)).getSecretKey();
+        if (ks.containsAlias(alias)) {
+            return ((KeyStore.SecretKeyEntry) ks.getEntry(alias, null)).getSecretKey();
         }
         KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
         android.security.keystore.KeyGenParameterSpec spec =
