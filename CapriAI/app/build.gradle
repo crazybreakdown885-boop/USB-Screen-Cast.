@@ -2,8 +2,8 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.nightcity.capriai'
  compileSdk 35
- defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 16; versionName '0.9.7'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
+ defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 17; versionName '0.9.8'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
-// Build marker: Capri 0.9.7 API fixes and natural dialogue.
+// Build marker: Capri 0.9.8 visible idle animations and mini-game.
