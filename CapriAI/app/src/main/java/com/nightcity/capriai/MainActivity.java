@@ -71,7 +71,30 @@ public class MainActivity extends Activity {
             composerFocused=focused;
             if(focused){getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);applyImmersiveMode(false);}
         });
-        tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS){tts.setLanguage(new Locale("pt","BR"));android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);tts.setSpeechRate(sp.getInt("voice_rate",94)/100f);tts.setPitch(sp.getInt("voice_pitch",100)/100f);}});
+        tts=new TextToSpeech(this,status->{
+            if(status==TextToSpeech.SUCCESS){
+                android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
+                java.util.Locale ptBr=new java.util.Locale("pt","BR");
+                tts.setLanguage(ptBr);
+                android.speech.tts.Voice best=null;
+                int bestScore=Integer.MIN_VALUE;
+                if(tts.getVoices()!=null)for(android.speech.tts.Voice voice:tts.getVoices()){
+                    java.util.Locale loc=voice.getLocale();
+                    if(!"pt".equalsIgnoreCase(loc.getLanguage())||!"BR".equalsIgnoreCase(loc.getCountry()))continue;
+                    String n=voice.getName().toLowerCase(java.util.Locale.ROOT);
+                    int score=voice.getQuality()*10;
+                    if(!voice.isNetworkConnectionRequired())score+=80;
+                    if(n.contains("female")||n.contains("femin"))score+=100;
+                    if(n.contains("af")||n.contains("female"))score+=25;
+                    if(score>bestScore){best=voice;bestScore=score;}
+                }
+                String chosen=sp.getString("voice_name","");
+                if(chosen.length()>0&&tts.getVoices()!=null)for(android.speech.tts.Voice voice:tts.getVoices())if(chosen.equals(voice.getName())){best=voice;break;}
+                if(best!=null){tts.setVoice(best);sp.edit().putString("voice_name",best.getName()).apply();}
+                tts.setSpeechRate(sp.getInt("voice_rate",92)/100f);
+                tts.setPitch(sp.getInt("voice_pitch",108)/100f);
+            }
+        });
         send.setOnClickListener(v->sendMessage()); mic.setOnClickListener(v->listen());
         prompt.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEND){sendMessage();return true;}return false;});
         floatBtn.setOnClickListener(v->{
