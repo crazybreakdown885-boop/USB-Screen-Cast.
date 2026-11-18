@@ -102,7 +102,8 @@ public class CapriSettingsActivity extends Activity {
         Button close=button("VOLTAR PARA CAPRI");page.addView(close,new LinearLayout.LayoutParams(-1,dp(46)));close.setOnClickListener(v->finish());
         setContentView(scroll);
     }
-    String normalizeApiKey(String value){String k=value==null?"":value.trim();if(k.regionMatches(true,0,"Bearer ",0,7))k=k.substring(7).trim();if(k.length()>=2&&((k.startsWith("\\\"")&&k.endsWith("\\\""))||(k.startsWith("\\'")&&k.endsWith("\\'"))))k=k.substring(1,k.length()-1).trim();return k.replaceAll("[\\r\\n\\t ]+","");}\n    String runApiTest(String provider,String api,String model,String endpoint){
+    String normalizeApiKey(String value){String k=value==null?"":value.trim();if(k.regionMatches(true,0,"Bearer ",0,7))k=k.substring(7).trim();if(k.length()>=2&&((k.startsWith("\"")&&k.endsWith("\""))||(k.startsWith("\'")&&k.endsWith("\'"))))k=k.substring(1,k.length()-1).trim();return k.replaceAll("[\\r\\n\\t ]+","");}
+    String runApiTest(String provider,String api,String model,String endpoint){
         java.net.HttpURLConnection c=null;
         try{
             String chosen=model;
