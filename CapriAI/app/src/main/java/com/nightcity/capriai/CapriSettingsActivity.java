@@ -46,10 +46,13 @@ public class CapriSettingsActivity extends Activity {
                 runOnUiThread(()->{testApi.setEnabled(true);testApi.setText("TESTAR CONEXÃO DA API");new AlertDialog.Builder(this).setTitle(result.startsWith("Conexão OK")?"API CONECTADA":"FALHA NA API").setMessage(result).setPositiveButton("OK",null).show();});
             }).start();
         });
-        section("VOZ");
+        section("VOZ / PORTUGUÊS BRASILEIRO");
+        TextView voiceInfo=text("Capri fala junto com as mensagens. O app seleciona automaticamente a melhor voz pt-BR instalada, priorizando vozes de maior qualidade e que funcionam offline. A voz exata depende do mecanismo de fala do Android.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
+        Button voiceSettings=button("ESCOLHER / BAIXAR VOZ DO ANDROID");page.addView(voiceSettings,new LinearLayout.LayoutParams(-1,dp(44)));
+        voiceSettings.setOnClickListener(v->{try{startActivity(new Intent("com.android.settings.TTS_SETTINGS"));}catch(Exception e){startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}});
         check("Ativar fala da Capri","voice_enabled",true);
-        seek("Velocidade da fala","voice_rate",50,200,94);
-        seek("Tom da voz","voice_pitch",50,200,100);
+        seek("Velocidade da fala","voice_rate",50,200,92);
+        seek("Tom da voz","voice_pitch",50,200,108);
         check("Ler respostas em voz alta","voice_replies",true);
         section("PERSONAGEM");
         check("Mostrar somente olhos, faixa serrilhada e boca","face_only",false);
