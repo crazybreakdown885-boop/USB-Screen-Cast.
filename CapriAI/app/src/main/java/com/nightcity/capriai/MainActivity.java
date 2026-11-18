@@ -193,7 +193,7 @@ public class MainActivity extends Activity {
     }
     void saveChatHistory(String role,String content){
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
-        if(!sp.getBoolean("save_history",true))return;
+        if(!sp.getBoolean("save_history",true)||!sp.getBoolean("memory_enabled",true))return;
         try{
             JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
             history.put(new JSONObject().put("role",role).put("content",content));
@@ -302,10 +302,19 @@ public class MainActivity extends Activity {
         MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),SCREEN_REQUEST);
     }
     @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==7&&c==RESULT_OK&&d!=null){ArrayList<String>a=d.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);if(a!=null&&!a.isEmpty()){prompt.setText(a.get(0));sendMessage();}}if(r==SCREEN_REQUEST&&c==RESULT_OK&&d!=null){Intent s=new Intent(this,ScreenCaptureService.class);s.putExtra("resultCode",c);s.putExtra("data",d);s.putExtra("continuous",getSharedPreferences("capri_settings",0).getBoolean("screen_monitor",false));startForegroundService(s);addMessage("SISTEMA","Permissão concedida. Capturando a tela atual...",false);}}
+    boolean voiceAllowed(android.content.SharedPreferences sp){
+        if(!sp.getBoolean("voice_enabled",true)||!sp.getBoolean("voice_replies",true)||sp.getBoolean("do_not_disturb",false))return false;
+        if(sp.getBoolean("quiet_hours",true)){
+            java.util.Calendar now=java.util.Calendar.getInstance();
+            int hour=now.get(java.util.Calendar.HOUR_OF_DAY);
+            if(hour>=22||hour<8)return false;
+        }
+        return true;
+    }
     void speak(String s){
         overlaySay(s);
         android.content.SharedPreferences sp=getSharedPreferences("capri_settings",0);
-        if(!sp.getBoolean("voice_enabled",true)||!sp.getBoolean("voice_replies",true))return;
+        if(!voiceAllowed(sp))return;
         if(tts==null)return;
         tts.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener(){
             final Handler h=new Handler();
