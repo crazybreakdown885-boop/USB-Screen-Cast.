@@ -10,4 +10,4 @@
 <service android:name=".OverlayService" android:exported="false"/>
 <service android:name=".ScreenCaptureService" android:exported="false" android:foregroundServiceType="mediaProjection"/>
 <activity android:name=".CapriSettingsActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
-</application></manifest>
+<activity android:name=".GameHubActivity" android:exported="false"/><activity android:name=".SystemControlActivity" android:exported="false"/></application></manifest>
