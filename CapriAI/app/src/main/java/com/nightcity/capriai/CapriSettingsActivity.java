@@ -27,7 +27,10 @@ public class CapriSettingsActivity extends Activity {
         TextView offlineInfo=text("OFFLINE: funciona sem chave. Conversa local básica, comandos, notas e voz. IA generativa e visão completa exigem provedor externo.",11,0xffa8a5b5);offlineInfo.setPadding(0,dp(6),0,dp(8));page.addView(offlineInfo);
         EditText model=field("Nome do modelo (ex.: gpt-4o-mini)");model.setText(prefs.getString("ai_model","gpt-4o-mini"));row("Modelo",model);
         EditText endpoint=field("API endpoint");endpoint.setText(prefs.getString("ai_endpoint","https://api.openai.com/v1"));row("Endereço da API",endpoint);
-        EditText api=field("Chave da API");api.setInputType(129);api.setText(prefs.getString("api_key",""));row("Chave da API",api);
+        EditText api=field("Chave da API");
+        api.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        api.setTransformationMethod(android.text.method.HideReturnsTransformationMethod.getInstance());
+        api.setText(prefs.getString("api_key",""));row("Chave da API (texto visível)",api);
         section("VOZ");
         check("Ativar fala da Capri","voice_enabled",true);
         seek("Velocidade da fala","voice_rate",50,200,94);
