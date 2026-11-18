@@ -63,7 +63,7 @@ public final class CapriActionEngine {
     private static int lastId=-1;
     private CapriActionEngine(){}
     public static synchronized Action next(){
-        int id;do{id=RNG.nextInt(actionCount());}while(id==lastId);lastId=id;
+        int id;do{id=RNG.nextInt(7)==0?21*50+RNG.nextInt(50):RNG.nextInt(actionCount());}while(id==lastId);lastId=id;
         int base=id/50,detail=id%50;
         String[] b=BASE[base];
         String caption=b[3]+" "+DETAILS[detail]+".";
