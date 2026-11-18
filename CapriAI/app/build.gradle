@@ -2,8 +2,8 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.nightcity.capriai'
  compileSdk 35
- defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 20; versionName '0.9.11'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
+ defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 21; versionName '0.9.12'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
-// Build marker: Capri 0.9.11 offline arcade, Android controls and Gemini neural speech.
+// Build marker: Capri 0.9.12 studio customization, expression gallery and eye icon.

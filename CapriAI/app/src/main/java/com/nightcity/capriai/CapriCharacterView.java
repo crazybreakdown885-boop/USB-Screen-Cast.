@@ -16,7 +16,7 @@ public class CapriCharacterView extends View {
     private boolean speaking=false, blink=false, faceOnly=false;
     private int expressionVariant=0;
     private long start=SystemClock.uptimeMillis();
-    private final int crimson=0xfff2154c, violet=0xff8a3dff, ink=0xff0a0710, green=0xff22f27a, blue=0xff1d6cff, white=0xffffffff;
+    private int crimson=0xfff2154c, violet=0xff8a3dff, ink=0xff0a0710, green=0xff22f27a, blue=0xff1d6cff, white=0xffffffff;
     private final HandlerTick tick=new HandlerTick();
 
     public CapriCharacterView(Context c){super(c);setLayerType(View.LAYER_TYPE_HARDWARE,null);load(c);}
@@ -33,6 +33,7 @@ public class CapriCharacterView extends View {
         invalidate();
     }
     public void setSpeaking(boolean value){speaking=value;invalidate();}
+    public void refreshStyle(){invalidate();}
     public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
     public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad")||m.contains("sorr"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("espant"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda")||m.contains("impacient"))mood="irritada";else if(m.contains("curios")||m.contains("pergunt")||m.contains("pens")||m.contains("atent")||m.contains("olha")||m.contains("escut"))mood="curiosa";else mood="neutra";expressionVariant=Math.floorMod(m.hashCode(),120);start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
@@ -40,7 +41,7 @@ public class CapriCharacterView extends View {
     public void react(){start=SystemClock.uptimeMillis();invalidate();}
     public void setBlink(boolean value){blink=value;invalidate();}
     @Override protected void onDraw(Canvas c){
-        super.onDraw(c);float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
+        super.onDraw(c);android.content.SharedPreferences style=getContext().getSharedPreferences("capri_settings",0);crimson=style.getInt("capri_primary_color",0xfff2154c);violet=style.getInt("capri_hair_color",0xff8a3dff);green=style.getInt("capri_accent_color",0xff22f27a);blue=style.getInt("capri_eye_color",0xff1d6cff);String outfit=style.getString("outfit_style","original");int outfitColor="neon".equals(outfit)?0xff20dff2:("hoodie".equals(outfit)?0xff8a3dff:("casual".equals(outfit)?0xff252333:crimson));float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
         if(customArt!=null&&!faceOnly){float t=(SystemClock.uptimeMillis()-start)/1000f;float bob=(float)Math.sin(t*1.6f)*(speaking?2.4f:1.2f)*d;float scale=Math.min(w/customArt.getWidth(),h/customArt.getHeight())*.94f;float dw=customArt.getWidth()*scale,dh=customArt.getHeight()*scale;paint.setAlpha(255);c.drawBitmap(customArt,null,new RectF((w-dw)/2f,(h-dh)/2f+bob,(w+dw)/2f,(h+dh)/2f+bob),paint);postInvalidateDelayed(speaking?55:120);return;}
         if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}
@@ -56,7 +57,7 @@ public class CapriCharacterView extends View {
             JSONObject layers=p.getJSONObject("layers");
             drawLayer(c,layers,"violet",violet);
             drawLayer(c,layers,"hair",crimson);
-            drawLayer(c,layers,"crimson",crimson);
+            drawLayer(c,layers,"crimson",outfitColor);
             drawLayer(c,layers,"shade",0xffc80f3f);
             drawLayer(c,layers,"ink",ink);
             drawLayer(c,layers,"green",green);

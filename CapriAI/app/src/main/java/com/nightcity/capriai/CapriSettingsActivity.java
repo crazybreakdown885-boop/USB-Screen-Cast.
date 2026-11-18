@@ -16,10 +16,10 @@ public class CapriSettingsActivity extends Activity {
     @Override public void onCreate(Bundle b){super.onCreate(b);prefs=getSharedPreferences("capri_settings",0);
         getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);
-        page=new LinearLayout(this);page.setOrientation(1);page.setPadding(dp(16),dp(14),dp(16),dp(24));page.setBackgroundColor(bg);scroll.addView(page);
-        TextView title=text("CAPRI  //  CONFIGURAÇÕES",20,Color.WHITE);title.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);page.addView(title);
-        TextView sub=text("COMPANHEIRA MÓVEL / AJUSTES",10,green);page.addView(sub);
-        section("CONVERSA / MODELO");
+        page=new LinearLayout(this);page.setOrientation(1);page.setPadding(dp(18),dp(18),dp(18),dp(28));page.setBackgroundColor(bg);scroll.addView(page);
+        TextView title=text("CAPRI  •  CENTRAL DE CONTROLE",20,Color.WHITE);title.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);page.addView(title);
+        TextView sub=text("PERSONALIZE, CONECTE E CONTROLE SUA COMPANHEIRA",10,green);page.addView(sub);
+        section("CONEXÃO COM IA");
         String[] providers={"OpenAI-compatible","Google Gemini","Ollama local","Offline"};
         Spinner provider=new Spinner(this);provider.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,providers));
         String saved=prefs.getString("ai_provider","Offline");if("Offline".equals(saved)&&!ApiKeyStore.get(this).trim().isEmpty())saved="OpenAI-compatible";provider.setSelection(java.util.Arrays.asList(providers).indexOf(saved)<0?0:java.util.Arrays.asList(providers).indexOf(saved));
@@ -32,7 +32,7 @@ public class CapriSettingsActivity extends Activity {
         api.setTransformationMethod(android.text.method.HideReturnsTransformationMethod.getInstance());
         api.setText(ApiKeyStore.get(this));row("Chave secreta da API (somente sua)",api);
         Button testApi=button("TESTAR CONEXÃO DA API");page.addView(testApi,new LinearLayout.LayoutParams(-1,dp(44)));
-        TextView apiHint=text("Cole sua chave secreta da plataforma OpenAI. Ela será criptografada no armazenamento do Android. Não use sua senha do ChatGPT. A API pode gerar cobranças separadas.",10,0xffa8a5b5);apiHint.setPadding(0,dp(4),0,dp(8));page.addView(apiHint);
+        TextView apiHint=text("Conecte usando uma chave oficial da API OpenAI ou de outro provedor. Não existe login OAuth público do ChatGPT para aplicativos Android de terceiros; sua assinatura ChatGPT não substitui créditos da API. A chave fica criptografada no aparelho.",10,0xffa8a5b5);apiHint.setPadding(0,dp(4),0,dp(8));page.addView(apiHint);
         Button createKey=button("CRIAR / OBTER MINHA CHAVE OPENAI");page.addView(createKey,new LinearLayout.LayoutParams(-1,dp(44)));
         createKey.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://platform.openai.com/api-keys")));}catch(Exception ignored){}});
         testApi.setOnClickListener(v->{
@@ -58,7 +58,9 @@ public class CapriSettingsActivity extends Activity {
         Button voiceStudio=button("ABRIR ESTÚDIO DE VOZ GEMINI");page.addView(voiceStudio,new LinearLayout.LayoutParams(-1,dp(42)));voiceStudio.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://aistudio.google.com/generate-speech")));}catch(Exception ignored){}});
         check("Ativar fala da Capri","voice_enabled",true);
         check("Ler respostas em voz alta","voice_replies",true);
-        section("PERSONAGEM");
+        section("ESTÚDIO DA CAPRI");
+        TextView studioInfo=text("Escolha as cores, experimente roupas, explore expressões faciais e teste as poses e animações da personagem.",11,0xffc1bdcc);studioInfo.setPadding(0,dp(4),0,dp(10));page.addView(studioInfo);
+        Button studioButton=button("ABRIR ESTÚDIO • ROUPAS, CORES, ROSTOS E ANIMAÇÕES");page.addView(studioButton,new LinearLayout.LayoutParams(-1,dp(50)));studioButton.setOnClickListener(v->startActivity(new Intent(this,CapriStudioActivity.class)));
         Button artButton=button("IMPORTAR IMAGEM PNG / WEBP DA CAPRI");page.addView(artButton,new LinearLayout.LayoutParams(-1,dp(44)));
         artButton.setOnClickListener(v->{Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);pick.addCategory(Intent.CATEGORY_OPENABLE);pick.setType("image/*");pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(pick,51);});
         TextView artInfo=text("Use uma imagem que você tenha direito de usar. PNG com fundo transparente funciona melhor. A arte importada substitui o desenho geométrico atual na tela principal.",10,0xffa8a5b5);artInfo.setPadding(0,dp(4),0,dp(8));page.addView(artInfo);
