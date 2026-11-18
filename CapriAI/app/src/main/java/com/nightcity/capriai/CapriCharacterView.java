@@ -35,13 +35,13 @@ public class CapriCharacterView extends View {
     public void setSpeaking(boolean value){speaking=value;invalidate();}
     public void refreshStyle(){invalidate();}
     public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
-    public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad")||m.contains("sorr"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("espant"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda")||m.contains("impacient"))mood="irritada";else if(m.contains("curios")||m.contains("pergunt")||m.contains("pens")||m.contains("atent")||m.contains("olha")||m.contains("escut"))mood="curiosa";else mood="neutra";expressionVariant=Math.floorMod(m.hashCode(),120);start=SystemClock.uptimeMillis();invalidate();}
+    public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad")||m.contains("sorr"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("espant"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda")||m.contains("impacient"))mood="irritada";else if(m.contains("apaixon"))mood="apaixonada";else if(m.contains("vergonh"))mood="envergonhada";else if(m.contains("sonolent"))mood="sonolenta";else if(m.contains("confus"))mood="confusa";else if(m.contains("curios")||m.contains("pergunt")||m.contains("pens")||m.contains("atent")||m.contains("olha")||m.contains("escut"))mood="curiosa";else mood="neutra";expressionVariant=Math.floorMod(m.hashCode(),120);start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
     public void setPose(String value){if(value!=null&&model!=null){JSONObject poses=model.optJSONObject("poses");if(poses!=null&&poses.has(value)){pose=value;invalidate();}}}
     public void react(){start=SystemClock.uptimeMillis();invalidate();}
     public void setBlink(boolean value){blink=value;invalidate();}
     @Override protected void onDraw(Canvas c){
-        super.onDraw(c);android.content.SharedPreferences style=getContext().getSharedPreferences("capri_settings",0);crimson=style.getInt("capri_primary_color",0xfff2154c);violet=style.getInt("capri_hair_color",0xff8a3dff);green=style.getInt("capri_accent_color",0xff22f27a);blue=style.getInt("capri_eye_color",0xff1d6cff);String outfit=style.getString("outfit_style","original");int outfitColor="neon".equals(outfit)?0xff20dff2:("hoodie".equals(outfit)?0xff8a3dff:("casual".equals(outfit)?0xff252333:crimson));float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
+        super.onDraw(c);android.content.SharedPreferences style=getContext().getSharedPreferences("capri_settings",0);crimson=style.getInt("capri_primary_color",0xfff2154c);violet=style.getInt("capri_hair_color",0xff8a3dff);green=style.getInt("capri_accent_color",0xff22f27a);blue=style.getInt("capri_eye_color",0xff1d6cff);String outfit=style.getString("outfit_style","original");String hat=style.getString("capri_hat_style","none");int outfitColor="neon".equals(outfit)?0xff20dff2:("hoodie".equals(outfit)?0xff8a3dff:("casual".equals(outfit)?0xff252333:("bunny".equals(outfit)?0xffffb6d5:crimson)));float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
         if(customArt!=null&&!faceOnly){float t=(SystemClock.uptimeMillis()-start)/1000f;float bob=(float)Math.sin(t*1.6f)*(speaking?2.4f:1.2f)*d;float scale=Math.min(w/customArt.getWidth(),h/customArt.getHeight())*.94f;float dw=customArt.getWidth()*scale,dh=customArt.getHeight()*scale;paint.setAlpha(255);c.drawBitmap(customArt,null,new RectF((w-dw)/2f,(h-dh)/2f+bob,(w+dw)/2f,(h+dh)/2f+bob),paint);postInvalidateDelayed(speaking?55:120);return;}
         if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}
@@ -62,7 +62,7 @@ public class CapriCharacterView extends View {
             drawLayer(c,layers,"ink",ink);
             drawLayer(c,layers,"green",green);
             JSONObject face=p.optJSONObject("face");
-            if(face!=null)drawFace(c,(float)face.optDouble("x"),(float)face.optDouble("y"),(float)face.optDouble("angle"),t);
+            if(face!=null){float fx=(float)face.optDouble("x"),fy=(float)face.optDouble("y"),fa=(float)face.optDouble("angle");drawFace(c,fx,fy,fa,t);drawAccessories(c,fx,fy,fa,hat,outfit);}
             c.restore();
             if(speaking)postInvalidateDelayed(55);else postInvalidateDelayed(120);
         }catch(Exception ignored){drawFallback(c,w,h,d);}
@@ -85,7 +85,7 @@ public class CapriCharacterView extends View {
         int intensity=expressionVariant%5;
         int gaze=(expressionVariant/5)%4;
         float eyeY=mood.equals("triste")? -3f : (mood.equals("surpresa")?-7.5f:-5.8f);
-        float eyeScale=(mood.equals("surpresa")?1.12f:(mood.equals("irritada")?.88f:1.0f))+(intensity-2)*.045f;
+        float eyeScale=(mood.equals("surpresa")?1.25f:(mood.equals("irritada")?.92f:(mood.equals("sonolenta")?.88f:(mood.equals("apaixonada")?1.20f:1.16f))))+(intensity-2)*.045f;
         float gazeX=gaze==1?2.2f:(gaze==2?-2.2f:0f);
         float gazeY=gaze==3?1.8f:0f;
         drawEye(c,-13.5f,eyeY,eyeScale,-.05f,gazeX,gazeY);drawEye(c,13.5f,eyeY+2.2f,eyeScale*.92f,.1f,gazeX,gazeY);
@@ -94,15 +94,33 @@ public class CapriCharacterView extends View {
         paint.setColor(ink);Path bang=new Path();bang.moveTo(-17,-32);bang.lineTo(-3,-32);bang.lineTo(-8,-14);bang.close();c.drawPath(bang,paint);
         bang.reset();bang.moveTo(3,-32);bang.lineTo(17,-30);bang.lineTo(7,-16);bang.close();c.drawPath(bang,paint);
         if(speaking){float open=.45f+(float)Math.abs(Math.sin(t*12))*.55f;paint.setColor(0xff2a0f3a);c.drawRoundRect(-6,17,6,17+9*open,2,2,paint);paint.setColor(white);Path fang=new Path();fang.moveTo(-6,17);fang.lineTo(-2,19);fang.lineTo(0,18);fang.lineTo(2,19);fang.lineTo(6,17);fang.lineTo(2,27);fang.lineTo(0,29);fang.lineTo(-3,26);fang.close();c.drawPath(fang,paint);}
-        else{paint.setColor(white);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);Path mouth=new Path();if(mood.equals("feliz")){mouth.moveTo(-7,18);mouth.quadTo(0,29,7,18);}else if(mood.equals("triste")){mouth.moveTo(-7,24);mouth.quadTo(0,16,7,24);}else if(mood.equals("surpresa")){paint.setStyle(Paint.Style.FILL);c.drawOval(-3,17,3,26,paint);}else if(mood.equals("irritada")){mouth.moveTo(-7,21);mouth.lineTo(7,21);}else if(mood.equals("curiosa")){mouth.moveTo(-5,20);mouth.quadTo(1,24,6,18);}else{mouth.moveTo(-7,19);mouth.lineTo(-3,18);mouth.lineTo(0,20);mouth.lineTo(3,18);mouth.lineTo(7,19);}if(!mood.equals("surpresa"))c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);}
+        else{paint.setColor(white);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);Path mouth=new Path();if(mood.equals("feliz")||mood.equals("apaixonada")){mouth.moveTo(-7,18);mouth.quadTo(0,29,7,18);}else if(mood.equals("envergonhada")){mouth.moveTo(-5,21);mouth.quadTo(0,24,5,21);}else if(mood.equals("sonolenta")){mouth.moveTo(-5,21);mouth.quadTo(0,17,5,21);}else if(mood.equals("confusa")){mouth.moveTo(-5,20);mouth.quadTo(0,16,6,22);}else if(mood.equals("triste")){mouth.moveTo(-7,24);mouth.quadTo(0,16,7,24);}else if(mood.equals("surpresa")){paint.setStyle(Paint.Style.FILL);c.drawOval(-3,17,3,26,paint);}else if(mood.equals("irritada")){mouth.moveTo(-7,21);mouth.lineTo(7,21);}else if(mood.equals("curiosa")){mouth.moveTo(-5,20);mouth.quadTo(1,24,6,18);}else{mouth.moveTo(-7,19);mouth.lineTo(-3,18);mouth.lineTo(0,20);mouth.lineTo(3,18);mouth.lineTo(7,19);}if(!mood.equals("surpresa"))c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);}
+        c.restore();
+    }
+    private void drawAccessories(Canvas c,float x,float y,float angle,String hat,String outfit){
+        c.save();c.translate(x,y);c.rotate((float)Math.toDegrees(angle));
+        boolean bunny="bunny".equals(hat)||"bunny".equals(outfit);
+        if(bunny){
+            paint.setStyle(Paint.Style.FILL);paint.setColor(0xffffeaf2);Path ears=new Path();
+            ears.moveTo(-19,-25);ears.quadTo(-32,-70,-22,-84);ears.quadTo(-10,-88,-8,-28);ears.close();
+            ears.moveTo(8,-28);ears.quadTo(6,-84,20,-87);ears.quadTo(34,-79,18,-24);ears.close();c.drawPath(ears,paint);
+            paint.setColor(0xffff8db9);Path inner=new Path();
+            inner.moveTo(-19,-35);inner.quadTo(-27,-69,-22,-77);inner.quadTo(-14,-75,-13,-34);inner.close();
+            inner.moveTo(12,-35);inner.quadTo(12,-75,20,-79);inner.quadTo(28,-68,15,-34);inner.close();c.drawPath(inner,paint);
+            paint.setColor(0xffffb6d5);Path bow=new Path();bow.moveTo(-4,38);bow.quadTo(-20,27,-17,42);bow.quadTo(-13,52,-3,43);
+            bow.moveTo(4,38);bow.quadTo(20,27,17,42);bow.quadTo(13,52,3,43);bow.close();c.drawPath(bow,paint);paint.setColor(0xfff2154c);c.drawCircle(0,40,3,paint);
+        }else if("beret".equals(hat)){paint.setColor(0xff8a3dff);c.drawOval(-27,-48,27,-27,paint);paint.setColor(0xfff2154c);c.drawCircle(0,-47,4,paint);}
+        else if("beanie".equals(hat)){paint.setColor(0xff28dff4);c.drawRoundRect(-25,-48,25,-27,8,8,paint);paint.setColor(0xfff2154c);c.drawRect(-25,-33,25,-28,paint);}
+        else if("cap".equals(hat)){paint.setColor(0xfff2154c);Path cap=new Path();cap.moveTo(-25,-39);cap.quadTo(-19,-55,0,-53);cap.quadTo(23,-53,25,-38);cap.lineTo(9,-33);cap.lineTo(-23,-33);cap.close();c.drawPath(cap,paint);c.drawOval(0,-37,32,-31,paint);}
+        if("bunny".equals(outfit)){paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3);paint.setColor(0xffffeaf2);c.drawArc(-28,52,28,112,200,140,false,paint);paint.setStyle(Paint.Style.FILL);}
         c.restore();
     }
     private void drawEye(Canvas c,float x,float y,float sx,float rot,float gazeX,float gazeY){
         c.save();c.translate(x,y);c.rotate(rot*57.3f);c.scale(sx,1);
-        Path eye=new Path();eye.moveTo(-12,-1);eye.quadTo(0,-10,12,-1);eye.quadTo(0,8,-12,-1);eye.close();
+        Path eye=new Path();eye.moveTo(-14,-1);eye.quadTo(0,-12,14,-1);eye.quadTo(0,9,-14,-1);eye.close();
         paint.setColor(ink);c.drawPath(eye,paint);c.save();c.clipPath(eye);
-        paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,6.8f,paint);paint.setStyle(Paint.Style.FILL);
-        paint.setColor(blue);c.drawCircle(gazeX,gazeY,5,paint);paint.setColor(white);c.drawCircle(gazeX-1.4f,gazeY-1.5f,1.8f,paint);c.restore();c.restore();
+        paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,7.8f,paint);paint.setStyle(Paint.Style.FILL);
+        paint.setColor(blue);c.drawCircle(gazeX,gazeY,5.8f,paint);paint.setColor(white);c.drawCircle(gazeX-1.4f,gazeY-1.5f,1.8f,paint);c.restore();c.restore();
     }
     private void drawMinimalFace(Canvas c,float w,float h,float d){
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
