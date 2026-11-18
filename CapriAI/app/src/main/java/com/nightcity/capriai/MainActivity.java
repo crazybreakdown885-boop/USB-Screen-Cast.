@@ -20,7 +20,7 @@ import java.util.*;
 
 public class MainActivity extends Activity {
     EditText prompt, key;
-    Button floatBtn;
+    Button floatBtn, readBtn;
     CapriCharacterView capriFace;
     LinearLayout messages;
     ScrollView scroll;
@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         LinearLayout head=new LinearLayout(this); head.setGravity(Gravity.CENTER_VERTICAL); head.setPadding(4,4,4,8);
         TextView brand=label("CAPRI // NIGHT CITY",16,cyan); brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
         head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        Button settings=smallButton("⚙ API"); Button read=smallButton("▣ TELA"); floatBtn=smallButton("◉ FLUTUAR");
+        Button settings=smallButton("⚙ CONFIG"); Button read=smallButton("▣ TELA"); readBtn=read; floatBtn=smallButton("◉ SOBREPOR");
         head.addView(settings); head.addView(read); head.addView(floatBtn); root.addView(head);
         read.setOnClickListener(v->toggleScreenContext());
         capriFace=new CapriCharacterView(this);
