@@ -277,8 +277,22 @@ public class MainActivity extends Activity {
                 if(model.isEmpty())model="gemini-2.0-flash";
                 URL u=new URL("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent?key="+java.net.URLEncoder.encode(api,"UTF-8"));
                 c=(HttpURLConnection)u.openConnection();c.setRequestMethod("POST");c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json");
-                JSONArray parts=new JSONArray().put(new JSONObject().put("text","Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu. Usuário: "+q));
-                JSONObject body=new JSONObject().put("contents",new JSONArray().put(new JSONObject().put("parts",parts))).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
+                String systemPrompt="Você é Capri, uma personagem feminina adulta com personalidade própria, curiosa, espirituosa, carinhosa quando faz sentido e às vezes sarcástica. Você não vive em Night City: não mencione Night City, cyberpunk ou cenários fictícios como se fossem o ambiente real. Fale em português brasileiro natural. Responda especificamente ao que a pessoa disse e use o histórico recente para manter continuidade. Não misture assuntos aleatórios, não acrescente bordões sem relação e não repita a pergunta. Se não souber, admita. Você pode iniciar conversas por iniciativa própria, mas não pressione a pessoa. Descreva ações apenas quando forem realmente representadas por uma animação disponível. Não diga que viu a tela, ouviu música ou percebeu algo que o app não forneceu.";
+                JSONArray contents=new JSONArray();
+                contents.put(new JSONObject().put("role","user").put("parts",new JSONArray().put(new JSONObject().put("text","Instruções de personalidade: "+systemPrompt))));
+                try{
+                    JSONArray history=new JSONArray(sp.getString("chat_history","[]"));
+                    for(int i=0;i<history.length();i++){
+                        JSONObject item=history.getJSONObject(i);
+                        String role=item.optString("role","user");
+                        if(!role.equals("user")&&!role.equals("assistant"))continue;
+                        String text=item.optString("content","");
+                        if(text.trim().isEmpty())continue;
+                        contents.put(new JSONObject().put("role",role.equals("assistant")?"model":"user").put("parts",new JSONArray().put(new JSONObject().put("text",text))));
+                    }
+                }catch(Exception ignored){}
+                if(contents.length()==1)contents.put(new JSONObject().put("role","user").put("parts",new JSONArray().put(new JSONObject().put("text",q))));
+                JSONObject body=new JSONObject().put("contents",contents).put("generationConfig",new JSONObject().put("maxOutputTokens",700));
                 try(OutputStream os=c.getOutputStream()){os.write(body.toString().getBytes("UTF-8"));}
                 int status=c.getResponseCode();InputStream is=status<400?c.getInputStream():c.getErrorStream();String raw=readAll(is);
                 if(status>=400)return "Falha no Gemini ("+status+"): "+raw.substring(0,Math.min(180,raw.length()));
