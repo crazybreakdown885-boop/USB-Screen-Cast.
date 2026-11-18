@@ -380,9 +380,11 @@ public class MainActivity extends Activity {
             if(!voiceWarningShown){voiceWarningShown=true;Toast.makeText(this,"Para a voz neural, configure uma chave Gemini TTS em CONFIG. A chave é independente do provedor de conversa.",Toast.LENGTH_LONG).show();}
             return;
         }
+        final String apiKey=api;
+        final String voiceName=sp.getString("voice_name","Leda");
         new Thread(()->{
             try{
-                byte[] audio=generateGeminiSpeech(api,s,sp.getString("voice_name","Leda"));
+                byte[] audio=generateGeminiSpeech(apiKey,s,voiceName);
                 File wav=new File(getCacheDir(),"capri_voice.wav");
                 try(FileOutputStream out=new FileOutputStream(wav)){out.write(audio);out.flush();}
                 runOnUiThread(()->playGeminiSpeech(wav));
