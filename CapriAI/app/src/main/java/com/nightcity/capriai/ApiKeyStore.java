@@ -39,7 +39,7 @@ public final class ApiKeyStore {
     public static void save(Context context, String value) throws Exception {
         String key = value == null ? "" : value.trim();
         if (key.regionMatches(true, 0, "Bearer ", 0, 7)) key = key.substring(7).trim();
-        if (key.length() >= 2 && ((key.startsWith("\\\"") && key.endsWith("\\\"")) || (key.startsWith("\\'") && key.endsWith("\\'")))) key = key.substring(1, key.length()-1).trim();
+        if (key.length() >= 2 && ((key.startsWith("\"") && key.endsWith("\"")) || (key.startsWith("\'") && key.endsWith("\'")))) key = key.substring(1, key.length()-1).trim();
         key = key.replaceAll("[\\r\\n\\t ]+", "");
         SharedPreferences p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (key.isEmpty()) {
