@@ -89,7 +89,7 @@ public class OverlayService extends Service {
                             long now=SystemClock.uptimeMillis();
                             character.react();
                             character.setMood("curiosa");
-                            character.animate().translationY(-dp(12)).rotation(-2f).setDuration(240).withEndAction(()->character.animate().translationY(0).rotation(0).setDuration(300).start()).start();
+                            character.animate().translationY(-dp(10)).scaleX(1.04f).scaleY(.97f).setDuration(180).withEndAction(()->character.animate().translationY(0).scaleX(1f).scaleY(1f).setDuration(220).start()).start();
                             bubble.setText("CAPRI: Opa, chamou minha atenção.");
                             lastTap=now;
                         }else getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
@@ -103,54 +103,80 @@ public class OverlayService extends Service {
         motionHandler.postDelayed(autonomyLoop,150000);
     }
 
+    void teleportOverlay(){
+        if(window==null||params==null||wm==null||dragging||destroyed)return;
+        final float base=getPrefs().getInt("character_scale",100)/100f;
+        window.animate().cancel();
+        window.animate().alpha(0f).scaleX(.82f).scaleY(.82f).setDuration(145)
+            .withEndAction(()->{
+                if(destroyed||window==null||params==null)return;
+                android.graphics.Point size=new android.graphics.Point();
+                wm.getDefaultDisplay().getRealSize(size);
+                int margin=dp(8);
+                int maxX=Math.max(margin,size.x-params.width-margin);
+                int maxY=Math.max(margin,size.y-params.height-margin);
+                int oldX=params.x,oldY=params.y;
+                for(int i=0;i<5;i++){
+                    params.x=margin+random.nextInt(Math.max(1,maxX-margin+1));
+                    params.y=margin+random.nextInt(Math.max(1,maxY-margin+1));
+                    if(Math.abs(params.x-oldX)>dp(90)||Math.abs(params.y-oldY)>dp(90))break;
+                }
+                clampPosition();
+                try{wm.updateViewLayout(window,params);}catch(Exception ignored){}
+                window.setAlpha(0f);window.setScaleX(.82f);window.setScaleY(.82f);
+                window.animate().alpha(1f).scaleX(1f).scaleY(1f)
+                    .setDuration(210).setInterpolator(new DecelerateInterpolator()).start();
+                getPrefs().edit().putInt("overlay_x",params.x).putInt("overlay_y",params.y).apply();
+            }).start();
+    }
     void idleActivity(){
         if(character==null||bubble==null||destroyed||dragging)return;
         CapriActionEngine.Action action=CapriActionEngine.next();
         character.animate().cancel();bubble.animate().cancel();
-        character.setTranslationX(0f);character.setTranslationY(0f);character.setRotation(0f);
+        character.setTranslationX(0f);character.setTranslationY(0f);
+        character.setScaleX(getPrefs().getInt("character_scale",100)/100f);
+        character.setScaleY(getPrefs().getInt("character_scale",100)/100f);
         bubble.setTranslationY(0f);bubble.setScaleX(1f);bubble.setScaleY(1f);
         float base=getPrefs().getInt("character_scale",100)/100f;
         character.setFaceOnly(false);character.setPose(action.pose);character.setMood(action.mood);
         bubble.setText("CAPRI: "+action.caption);
         long d=action.duration;
         switch(action.kind){
+            case "teleport":
+                teleportOverlay();
+                break;
             case "stretch":
-                character.animate().translationY(-dp(25)).scaleX(base*1.04f).scaleY(base*.96f).rotation(-3f).setDuration(d).start();break;
+                character.animate().translationY(-dp(20)).scaleX(base*1.035f).scaleY(base*.965f).setDuration(d).start();break;
             case "look": case "read": case "lean":
-                character.animate().translationY(-dp(9)).translationX(dp(7)).rotation(-4f).setDuration(d).start();
-                bubble.animate().scaleX(1.02f).setDuration(d/2).start();break;
+                character.animate().translationY(-dp(8)).translationX(dp(6)).setDuration(d).start();
+                bubble.animate().scaleX(1.015f).setDuration(d/2).start();break;
             case "hair": case "wave":
-                character.animate().rotation(5f).translationY(-dp(5)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).setDuration(d/2).start()).start();break;
+                character.animate().translationY(-dp(5)).scaleX(base*1.025f).setDuration(d/2).withEndAction(()->character.animate().scaleX(base).setDuration(d/2).start()).start();break;
             case "yawn": case "rest":
-                character.animate().translationY(dp(8)).scaleX(base*1.03f).scaleY(base*.97f).rotation(2f).setDuration(d).start();break;
-            case "smile": case "giggle":
-                character.animate().translationY(-dp(8)).rotation(-2f).setDuration(d/2).withEndAction(()->character.animate().translationY(0).rotation(0).setDuration(d/2).start()).start();break;
+                character.animate().translationY(dp(7)).scaleX(base*1.025f).scaleY(base*.975f).setDuration(d).start();break;
+            case "smile": case "giggle": case "bounce":
+                character.animate().translationY(-dp(13)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
             case "listen": case "think": case "lookup":
-                character.animate().rotation(-5f).translationX(-dp(4)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).translationX(0f).setDuration(d/2).start()).start();break;
-            case "shrug": case "fidget":
-                character.animate().rotation(4f).translationX(dp(4)).setDuration(d/2).withEndAction(()->character.animate().rotation(-3f).translationX(-dp(3)).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).translationX(0f).setDuration(d/3).start()).start()).start();break;
+                character.animate().translationX(-dp(4)).translationY(-dp(4)).setDuration(d/2).withEndAction(()->character.animate().translationX(0f).translationY(0f).setDuration(d/2).start()).start();break;
             case "nod":
                 character.animate().translationY(dp(4)).setDuration(d/3).withEndAction(()->character.animate().translationY(-dp(4)).setDuration(d/3).withEndAction(()->character.animate().translationY(0).setDuration(d/3).start()).start()).start();break;
             case "crouch":
-                character.animate().translationY(dp(10)).scaleY(base*.94f).setDuration(d).start();break;
+                character.animate().translationY(dp(9)).scaleY(base*.94f).setDuration(d).start();break;
             case "sway":
-                android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-                if(audio!=null&&audio.isMusicActive()){
-                    character.animate().rotation(7f).setDuration(d/2).withEndAction(()->character.animate().rotation(-7f).setDuration(d/2).withEndAction(()->character.animate().rotation(0f).setDuration(d/3).start()).start()).start();
-                }else character.animate().translationY(-dp(4)).setDuration(d).start();
-                break;
-            case "dance":character.animate().rotation(7f).translationY(-dp(9)).setDuration(d/2).withEndAction(()->character.animate().rotation(-7f).translationY(0).setDuration(d/2).start()).start();break;
-            case "twirl":character.animate().rotationBy(360f).setDuration(d+500).start();break;
-            case "bounce":character.animate().translationY(-dp(18)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
-            case "curtsy":character.animate().translationY(dp(12)).scaleY(base*.92f).rotation(3f).setDuration(d).start();break;
-            case "peek":character.animate().translationX(-dp(12)).rotation(-6f).setDuration(d/2).withEndAction(()->character.animate().translationX(0).rotation(0).setDuration(d/2).start()).start();break;
+                character.animate().translationY(-dp(4)).scaleX(base*1.02f).setDuration(d).start();break;
+            case "dance":
+                character.animate().translationY(-dp(8)).scaleX(base*1.04f).scaleY(base*.96f).setDuration(d/2).withEndAction(()->character.animate().translationY(0).scaleX(base).scaleY(base).setDuration(d/2).start()).start();break;
+            case "curtsy":
+                character.animate().translationY(dp(10)).scaleY(base*.93f).setDuration(d).start();break;
+            case "peek":
+                character.animate().translationX(-dp(10)).setDuration(d/2).withEndAction(()->character.animate().translationX(0).setDuration(d/2).start()).start();break;
             default:
-                character.animate().translationY(-dp(5)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
+                character.animate().translationY(-dp(4)).setDuration(d/2).withEndAction(()->character.animate().translationY(0).setDuration(d/2).start()).start();break;
         }
         motionHandler.postDelayed(()->{
             if(destroyed||character==null||dragging)return;
-            character.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(450).start();
-            bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(350).start();
+            character.animate().translationX(0f).translationY(0f).scaleX(base).scaleY(base).setDuration(350).start();
+            bubble.animate().translationY(0f).scaleX(1f).scaleY(1f).setDuration(300).start();
             character.setPose(getPrefs().getString("character_pose","sit"));
             character.setFaceOnly(getPrefs().getBoolean("face_only",false));
         },d+350);
