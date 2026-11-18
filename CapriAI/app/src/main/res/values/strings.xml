@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capri_accessibility_description">A Capri lê texto visível da tela somente após ativação explícita pelo usuário. Campos editáveis e senhas são ignorados. O envio ao provedor de IA é uma opção separada.</string>
+</resources>
