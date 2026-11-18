@@ -13,6 +13,7 @@ public class CapriCharacterView extends View {
     private String pose="sit";
     private String mood="neutra";
     private boolean speaking=false, blink=false, faceOnly=false;
+    private int expressionVariant=0;
     private long start=SystemClock.uptimeMillis();
     private final int crimson=0xfff2154c, violet=0xff8a3dff, ink=0xff0a0710, green=0xff22f27a, blue=0xff1d6cff, white=0xffffffff;
     private final HandlerTick tick=new HandlerTick();
@@ -26,7 +27,7 @@ public class CapriCharacterView extends View {
     }
     public void setSpeaking(boolean value){speaking=value;invalidate();}
     public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
-    public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("sério")||m.contains("serio"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda"))mood="irritada";else if(m.contains("?")||m.contains("curios")||m.contains("como")||m.contains("por que"))mood="curiosa";else mood="neutra";start=SystemClock.uptimeMillis();invalidate();}
+    public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad")||m.contains("sorr"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("espant"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda")||m.contains("impacient"))mood="irritada";else if(m.contains("curios")||m.contains("pergunt")||m.contains("pens")||m.contains("atent")||m.contains("olha")||m.contains("escut"))mood="curiosa";else mood="neutra";expressionVariant=Math.floorMod(m.hashCode(),120);start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
     public void setPose(String value){if(value!=null&&model!=null){JSONObject poses=model.optJSONObject("poses");if(poses!=null&&poses.has(value)){pose=value;invalidate();}}}
     public void react(){start=SystemClock.uptimeMillis();invalidate();}
@@ -72,9 +73,13 @@ public class CapriCharacterView extends View {
         Path l=new Path();l.moveTo(-28,-15);l.lineTo(-3,-20);l.lineTo(-2,4);l.lineTo(-8,9);l.lineTo(-23,8);l.lineTo(-29,-2);l.close();
         Path r=new Path();r.moveTo(3,-21);r.lineTo(28,-17);r.lineTo(30,-3);r.lineTo(23,7);r.lineTo(7,9);r.lineTo(2,4);r.close();
         paint.setColor(green);c.drawPath(l,paint);c.drawPath(r,paint);
+        int intensity=expressionVariant%5;
+        int gaze=(expressionVariant/5)%4;
         float eyeY=mood.equals("triste")? -3f : (mood.equals("surpresa")?-7.5f:-5.8f);
-        float eyeScale=mood.equals("surpresa")?1.22f:(mood.equals("irritada")?.82f:1.08f);
-        drawEye(c,-13.5f,eyeY,eyeScale,-.05f);drawEye(c,13.5f,eyeY+2.2f,eyeScale*.92f,.1f);
+        float eyeScale=(mood.equals("surpresa")?1.12f:(mood.equals("irritada")?.88f:1.0f))+(intensity-2)*.045f;
+        float gazeX=gaze==1?2.2f:(gaze==2?-2.2f:0f);
+        float gazeY=gaze==3?1.8f:0f;
+        drawEye(c,-13.5f,eyeY,eyeScale,-.05f,gazeX,gazeY);drawEye(c,13.5f,eyeY+2.2f,eyeScale*.92f,.1f,gazeX,gazeY);
         paint.setColor(ink);paint.setStrokeWidth(2.1f);paint.setStyle(Paint.Style.STROKE);
         Path brow=new Path();if(mood.equals("irritada")){brow.moveTo(-23,-18);brow.lineTo(-7,-14);brow.moveTo(7,-14);brow.lineTo(23,-19);}else if(mood.equals("surpresa")){brow.moveTo(-23,-23);brow.quadTo(-14,-29,-6,-22);brow.moveTo(6,-22);brow.quadTo(15,-29,23,-23);}else if(mood.equals("triste")){brow.moveTo(-23,-17);brow.lineTo(-8,-22);brow.moveTo(8,-22);brow.lineTo(23,-17);}else{brow.moveTo(-22,-20);brow.quadTo(-14,-24,-7,-20);brow.moveTo(7,-20);brow.quadTo(15,-24,22,-20);}c.drawPath(brow,paint);paint.setStyle(Paint.Style.FILL);
         paint.setColor(ink);Path bang=new Path();bang.moveTo(-17,-32);bang.lineTo(-3,-32);bang.lineTo(-8,-14);bang.close();c.drawPath(bang,paint);
@@ -83,12 +88,12 @@ public class CapriCharacterView extends View {
         else{paint.setColor(white);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);Path mouth=new Path();if(mood.equals("feliz")){mouth.moveTo(-7,18);mouth.quadTo(0,29,7,18);}else if(mood.equals("triste")){mouth.moveTo(-7,24);mouth.quadTo(0,16,7,24);}else if(mood.equals("surpresa")){paint.setStyle(Paint.Style.FILL);c.drawOval(-3,17,3,26,paint);}else if(mood.equals("irritada")){mouth.moveTo(-7,21);mouth.lineTo(7,21);}else if(mood.equals("curiosa")){mouth.moveTo(-5,20);mouth.quadTo(1,24,6,18);}else{mouth.moveTo(-7,19);mouth.lineTo(-3,18);mouth.lineTo(0,20);mouth.lineTo(3,18);mouth.lineTo(7,19);}if(!mood.equals("surpresa"))c.drawPath(mouth,paint);paint.setStyle(Paint.Style.FILL);}
         c.restore();
     }
-    private void drawEye(Canvas c,float x,float y,float sx,float rot){
+    private void drawEye(Canvas c,float x,float y,float sx,float rot,float gazeX,float gazeY){
         c.save();c.translate(x,y);c.rotate(rot*57.3f);c.scale(sx,1);
         Path eye=new Path();eye.moveTo(-12,-1);eye.quadTo(0,-10,12,-1);eye.quadTo(0,8,-12,-1);eye.close();
         paint.setColor(ink);c.drawPath(eye,paint);c.save();c.clipPath(eye);
         paint.setColor(green);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);c.drawCircle(0,0,6.8f,paint);paint.setStyle(Paint.Style.FILL);
-        paint.setColor(blue);c.drawCircle(0,0,5,paint);paint.setColor(white);c.drawCircle(0,0,1.8f,paint);c.restore();c.restore();
+        paint.setColor(blue);c.drawCircle(gazeX,gazeY,5,paint);paint.setColor(white);c.drawCircle(gazeX-1.4f,gazeY-1.5f,1.8f,paint);c.restore();c.restore();
     }
     private void drawMinimalFace(Canvas c,float w,float h,float d){
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
