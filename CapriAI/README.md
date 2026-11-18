@@ -1,6 +1,6 @@
-# Capri AI Android 0.8.0 — versão de lançamento
+# Capri AI Android 0.9.1 — versão de lançamento
 
-O APK publicado na release `capri-v0.8.0` é gerado exclusivamente pelo módulo `CapriAI`.
+O APK publicado na release `capri-v0.9.1` é gerado exclusivamente pelo módulo `CapriAI`.
 
 Adaptação Android independente e experimental da personagem Capri. Compatível com Android 10 ou superior e builds ARMv7/ARM64.
 
@@ -12,6 +12,7 @@ Adaptação Android independente e experimental da personagem Capri. Compatível
 - Sincronização do humor da conversa com a personagem flutuante.
 - Interface e configurações em português brasileiro.
 - Conversa com API compatível com OpenAI; a chave é inserida pelo usuário.
+- **A chave da API aparece em texto visível nas configurações**, sem ser substituída por pontos.
 - Voz de saída pelo TextToSpeech do Android e entrada por reconhecimento de voz.
 - Comandos Android básicos, como abrir configurações/câmera, pesquisar, timer e notas locais.
 - Captura pontual de tela via MediaProjection, sempre com confirmação explícita do Android.
@@ -26,7 +27,7 @@ Adaptação Android independente e experimental da personagem Capri. Compatível
 
 ## Configurar a API
 
-A chave é fornecida manualmente pelo usuário nas configurações. A assinatura do ChatGPT não inclui créditos da API. Erros HTTP 401 normalmente indicam chave inválida/revogada, projeto sem autorização ou configuração incorreta.
+A chave é fornecida manualmente pelo usuário nas configurações e permanece visível no campo para facilitar a conferência. A assinatura do ChatGPT não inclui créditos da API. Erros HTTP 401 normalmente indicam chave inválida/revogada, projeto sem autorização ou configuração incorreta.
 
 O aplicativo não pode obter automaticamente uma chave privada de outro app por meio de uma permissão Android. Não coloque chaves em repositórios públicos.
 
@@ -46,9 +47,9 @@ gradle assembleDebug
 
 O workflow `.github/workflows/capri-ai-android.yml` gera o APK debug para ARMv7 e ARM64.
 
+## Histórico
 
-## Versão 0.9.0
-
+### Versão 0.9.0
 - Inicialização padrão no modo Offline, sem exigir chave de API.
 - O modo Offline oferece respostas locais básicas e comandos Android; não equivale a um modelo generativo completo.
 - Sobreposição reposicionável por arraste, com posição salva entre sessões.
@@ -56,3 +57,6 @@ O workflow `.github/workflows/capri-ai-android.yml` gera o APK debug para ARMv7 
 - Poses disponíveis nas configurações: sentada, deitada, agachada e de costas.
 - Ícone do aplicativo usa o retrato da Capri.
 - Interface segue o estilo de terminal neon da personagem.
+
+### Versão 0.9.1
+- Campo da chave API configurado para mostrar letras e números em texto normal, sem pontos.
