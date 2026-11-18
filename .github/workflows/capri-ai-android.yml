@@ -32,6 +32,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Download Sherpa-ONNX Android runtime
+        run: |
+          mkdir -p CapriAI/app/libs
+          curl --fail --location --retry 3 --output CapriAI/app/libs/sherpa-onnx-2.0.1.aar https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.1/sherpa-onnx-2.0.1.aar
+          test -s CapriAI/app/libs/sherpa-onnx-2.0.1.aar
       - name: Build Capri AI APK
         working-directory: CapriAI
         run: gradle --no-daemon assembleDebug
@@ -48,10 +53,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.12"
+          TAG="capri-v1.0.0"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.12" --notes "Capri 0.9.12: Estúdio visual com cores, roupas, galeria de expressões e poses animadas; ícone em forma de olho sem bordas brancas. Dessa ainda não tem API pública ou pesos para integração; Gemini TTS permanece como voz funcional. Build de desenvolvimento; APK debug ARMv7/ARM64."
+            gh release edit "$TAG" --title "Capri AI Android 1.0.0" --notes "Capri 1.0.0: interface terminal com chuva binária animada; voz neural offline PT-BR via Sherpa-ONNX/Piper (modelo opcional baixado no aparelho); roupas, chapéus, bunny girl, expressões e novas coreografias; módulos de web, aplicativos e leitura de tela com acessibilidade opt-in; ícone adaptativo do olho Capri; diagnóstico de conexão OpenAI. Voz local exige baixar pacote de modelo de aproximadamente 63 MB. Login Google requer client ID OAuth configurado pelo desenvolvedor. APK debug ARMv7/ARM64/x86/x86_64."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.12" --notes "Capri 0.9.12: Estúdio visual com cores, roupas, galeria de expressões e poses animadas; ícone em forma de olho sem bordas brancas. Dessa ainda não tem API pública ou pesos para integração; Gemini TTS permanece como voz funcional. Build de desenvolvimento; APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.12" --notes "Capri 1.0.0: interface terminal com chuva binária animada; voz neural offline PT-BR via Sherpa-ONNX/Piper (modelo opcional baixado no aparelho); roupas, chapéus, bunny girl, expressões e novas coreografias; módulos de web, aplicativos e leitura de tela com acessibilidade opt-in; ícone adaptativo do olho Capri; diagnóstico de conexão OpenAI. Voz local exige baixar pacote de modelo de aproximadamente 63 MB. Login Google requer client ID OAuth configurado pelo desenvolvedor. APK debug ARMv7/ARM64/x86/x86_64."
           fi
