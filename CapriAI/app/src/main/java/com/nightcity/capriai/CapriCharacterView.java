@@ -24,7 +24,8 @@ public class CapriCharacterView extends View {
             model=new JSONObject(out.toString("UTF-8"));
         }catch(Exception ignored){model=null;}
     }
-    public void setSpeaking(boolean value){speaking=value;invalidate();}\n    public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
+    public void setSpeaking(boolean value){speaking=value;invalidate();}
+    public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
     public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("sério")||m.contains("serio"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda"))mood="irritada";else if(m.contains("?")||m.contains("curios")||m.contains("como")||m.contains("por que"))mood="curiosa";else mood="neutra";start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
     public void setPose(String value){if(value!=null&&model!=null&&model.optJSONObject("poses").has(value)){pose=value;invalidate();}}
@@ -33,7 +34,8 @@ public class CapriCharacterView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);float d=getResources().getDisplayMetrics().density,w=getWidth(),h=getHeight();
         c.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);
-        if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}\n        if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
+        if(faceOnly){drawMinimalFace(c,w,h,d);postInvalidateDelayed(speaking?55:100);return;}
+        if(model==null){drawFallback(c,w,h,d);postInvalidateDelayed(40);return;}
         try{
             JSONObject p=model.getJSONObject("poses").getJSONObject(pose);
             JSONArray b=p.getJSONArray("bounds");float minX=(float)b.getDouble(0),minY=(float)b.getDouble(1),maxX=(float)b.getDouble(2),maxY=(float)b.getDouble(3);
