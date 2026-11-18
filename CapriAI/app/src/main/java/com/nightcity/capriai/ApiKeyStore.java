@@ -14,9 +14,11 @@ import javax.crypto.spec.GCMParameterSpec;
 public final class ApiKeyStore {
     private static final String PREFS = "capri_secure";
     private static final String ALIAS = "capri_openai_api_key_v1";
+    private static final String GEMINI_ALIAS = "capri_gemini_voice_api_key_v1";
     private ApiKeyStore() {}
 
-    private static SecretKey getOrCreateKey() throws Exception {
+    private static SecretKey getOrCreateKey() throws Exception { return getOrCreateKey(ALIAS); }
+    private static SecretKey getOrCreateKey(String alias) throws Exception {
         KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
         ks.load(null);
         if (ks.containsAlias(ALIAS)) {
@@ -25,7 +27,7 @@ public final class ApiKeyStore {
         KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
         android.security.keystore.KeyGenParameterSpec spec =
             new android.security.keystore.KeyGenParameterSpec.Builder(
-                ALIAS,
+                alias,
                 android.security.keystore.KeyProperties.PURPOSE_ENCRYPT |
                 android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
@@ -53,6 +55,24 @@ public final class ApiKeyStore {
             .putString("cipher", Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .putString("iv", Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP))
             .apply();
+    }
+
+
+    public static void saveGemini(Context context,String value) throws Exception {
+        String key=value==null?"":value.trim();
+        if(key.regionMatches(true,0,"Bearer ",0,7))key=key.substring(7).trim();
+        key=key.replaceAll("[\\r\\n\\t ]+","");
+        SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        if(key.isEmpty()){p.edit().remove("gemini_cipher").remove("gemini_iv").apply();return;}
+        Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,getOrCreateKey(GEMINI_ALIAS));
+        byte[] encrypted=cipher.doFinal(key.getBytes(StandardCharsets.UTF_8));
+        p.edit().putString("gemini_cipher",Base64.encodeToString(encrypted,Base64.NO_WRAP)).putString("gemini_iv",Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP)).apply();
+    }
+    public static String getGemini(Context context){
+        SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        String encrypted=p.getString("gemini_cipher",""),iv=p.getString("gemini_iv","");
+        try{if(!encrypted.isEmpty()&&!iv.isEmpty()){Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,getOrCreateKey(GEMINI_ALIAS),new GCMParameterSpec(128,Base64.decode(iv,Base64.NO_WRAP)));return new String(cipher.doFinal(Base64.decode(encrypted,Base64.NO_WRAP)),StandardCharsets.UTF_8);}}catch(Exception ignored){p.edit().remove("gemini_cipher").remove("gemini_iv").apply();}
+        return "";
     }
 
     public static String get(Context context) {
