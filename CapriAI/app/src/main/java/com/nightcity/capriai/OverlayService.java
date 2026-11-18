@@ -14,7 +14,8 @@ public class OverlayService extends Service {
     public static boolean running=false;
     public static final String ACTION_SAY="com.nightcity.capriai.OVERLAY_SAY";
     public static final String ACTION_SPEAK="com.nightcity.capriai.OVERLAY_SPEAK";
-    public static final String ACTION_POSE="com.nightcity.capriai.OVERLAY_POSE";\n    public static final String ACTION_MOOD="com.nightcity.capriai.OVERLAY_MOOD";
+    public static final String ACTION_POSE="com.nightcity.capriai.OVERLAY_POSE";
+    public static final String ACTION_MOOD="com.nightcity.capriai.OVERLAY_MOOD";
     public static final String EXTRA_TEXT="text";
     WindowManager wm;
     FrameLayout window;
@@ -69,7 +70,8 @@ public class OverlayService extends Service {
         if(i!=null){String action=i.getAction();
             if(ACTION_SAY.equals(action)){String s=i.getStringExtra(EXTRA_TEXT);if(s!=null&&!s.trim().isEmpty()){bubble.setText("CAPRI: "+s);character.react();}}
             else if(ACTION_SPEAK.equals(action))character.setSpeaking(i.getBooleanExtra("speaking",false));
-            else if(ACTION_POSE.equals(action))character.setPose(i.getStringExtra("pose"));\n            else if(ACTION_MOOD.equals(action))character.setMood(i.getStringExtra("mood_text"));
+            else if(ACTION_POSE.equals(action))character.setPose(i.getStringExtra("pose"));
+            else if(ACTION_MOOD.equals(action))character.setMood(i.getStringExtra("mood_text"));
         }return START_STICKY;
     }
     @Override public void onDestroy(){running=false;if(window!=null&&wm!=null)try{wm.removeView(window);}catch(Exception ignored){}super.onDestroy();}
