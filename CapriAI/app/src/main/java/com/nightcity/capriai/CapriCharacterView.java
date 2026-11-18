@@ -28,7 +28,7 @@ public class CapriCharacterView extends View {
     public void setFaceOnly(boolean value){faceOnly=value;invalidate();}
     public void setMood(String value){if(value==null)return;String m=value.toLowerCase(java.util.Locale.ROOT);if(m.contains("alegr")||m.contains("feliz")||m.contains("ótim")||m.contains("haha")||m.contains("obrigad"))mood="feliz";else if(m.contains("trist")||m.contains("pena")||m.contains("desculp"))mood="triste";else if(m.contains("surpres")||m.contains("uau")||m.contains("sério")||m.contains("serio"))mood="surpresa";else if(m.contains("raiv")||m.contains("irrit")||m.contains("droga")||m.contains("merda"))mood="irritada";else if(m.contains("?")||m.contains("curios")||m.contains("como")||m.contains("por que"))mood="curiosa";else mood="neutra";start=SystemClock.uptimeMillis();invalidate();}
     public String getMood(){return mood;}
-    public void setPose(String value){if(value!=null&&model!=null&&model.optJSONObject("poses").has(value)){pose=value;invalidate();}}
+    public void setPose(String value){if(value!=null&&model!=null){JSONObject poses=model.optJSONObject("poses");if(poses!=null&&poses.has(value)){pose=value;invalidate();}}}
     public void react(){start=SystemClock.uptimeMillis();invalidate();}
     public void setBlink(boolean value){blink=value;invalidate();}
     @Override protected void onDraw(Canvas c){
