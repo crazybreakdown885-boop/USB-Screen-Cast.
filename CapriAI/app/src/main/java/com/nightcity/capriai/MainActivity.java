@@ -31,6 +31,9 @@ public class MainActivity extends Activity {
     boolean keyboardVisible=false;
     boolean composerFocused=false;
     String latestScreenImage=null;
+    final Handler idleMotionHandler=new Handler(Looper.getMainLooper());
+    final Random idleMotionRandom=new Random();
+    final Runnable idleMotion=new Runnable(){public void run(){if(capriFace==null)return;if(!keyboardVisible&&!composerFocused)animateCapriIdle();idleMotionHandler.postDelayed(this,6500+idleMotionRandom.nextInt(4500));}};
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -128,8 +131,26 @@ public class MainActivity extends Activity {
         boolean allowed=android.provider.Settings.canDrawOverlays(this);
         floatBtn.setText(OverlayService.running?"■ PARAR":(allowed?"◉ SOBREPOR":"◉ PERMITIR"));
     }
+    void animateCapriIdle(){
+        if(capriFace==null)return;
+        capriFace.animate().cancel();
+        float base=getSharedPreferences("capri_settings",0).getInt("character_scale",100)/100f;
+        int act=idleMotionRandom.nextInt(6);
+        String[] poses={"sit","lie","crouch","back"};
+        switch(act){
+            case 0: capriFace.setPose("back");capriFace.animate().translationY(-dp(22)).translationX(dp(24)).rotation(-7f).scaleX(base*1.05f).scaleY(base*.94f).setDuration(850).start();break;
+            case 1: capriFace.setPose("lie");capriFace.animate().translationY(dp(12)).translationX(-dp(18)).rotation(5f).scaleX(base*1.08f).scaleY(base*.94f).setDuration(950).start();break;
+            case 2: capriFace.setPose("crouch");capriFace.animate().translationY(-dp(12)).translationX(-dp(22)).rotation(-9f).setDuration(350).withEndAction(()->capriFace.animate().translationX(dp(22)).rotation(9f).setDuration(350).start()).start();break;
+            case 3: capriFace.setPose("back");capriFace.animate().translationY(-dp(28)).rotation(13f).setDuration(320).withEndAction(()->capriFace.animate().rotation(-13f).setDuration(320).withEndAction(()->capriFace.animate().rotation(0f).translationY(0f).setDuration(320).start()).start()).start();break;
+            case 4: capriFace.setPose("sit");capriFace.animate().translationY(dp(45)).translationX(dp(8)).scaleX(base*.98f).scaleY(base*.98f).setDuration(650).start();break;
+            default: capriFace.setPose(poses[idleMotionRandom.nextInt(poses.length)]);capriFace.animate().translationY(-dp(48)).setDuration(250).withEndAction(()->capriFace.animate().translationY(0).setDuration(250).withEndAction(()->capriFace.animate().translationY(-dp(32)).setDuration(220).withEndAction(()->capriFace.animate().translationY(0).setDuration(220).start()).start()).start()).start();break;
+        }
+        idleMotionHandler.postDelayed(()->{if(capriFace!=null){capriFace.animate().translationX(0f).translationY(0f).rotation(0f).scaleX(base).scaleY(base).setDuration(600).start();capriFace.setPose(getSharedPreferences("capri_settings",0).getString("character_pose","sit"));}},4300);
+    }
+    @Override protected void onPause(){idleMotionHandler.removeCallbacks(idleMotion);super.onPause();}
     @Override protected void onResume(){
         super.onResume();
+        idleMotionHandler.removeCallbacks(idleMotion);idleMotionHandler.postDelayed(idleMotion,1800);
         if(getSharedPreferences("capri_settings",0).getBoolean("overlay_enabled",false)&&android.provider.Settings.canDrawOverlays(this)&&!OverlayService.running){
             getSharedPreferences("capri_settings",0).edit().putBoolean("overlay_pending",false).apply();
             startService(new Intent(this,OverlayService.class));
@@ -357,5 +378,5 @@ public class MainActivity extends Activity {
         tts.speak(s,TextToSpeech.QUEUE_FLUSH,null,"capri");
     }
     void listen(){try{Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"pt-BR");startActivityForResult(i,7);}catch(Exception e){Toast.makeText(this,"Reconhecimento de voz indisponível",0).show();}}
-    @Override protected void onDestroy(){if(screenReceiver!=null)unregisterReceiver(screenReceiver);if(tts!=null)tts.shutdown();super.onDestroy();}
+    @Override protected void onDestroy(){idleMotionHandler.removeCallbacksAndMessages(null);if(screenReceiver!=null)unregisterReceiver(screenReceiver);if(tts!=null)tts.shutdown();super.onDestroy();}
 }
