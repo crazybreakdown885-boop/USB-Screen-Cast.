@@ -2,8 +2,11 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.nightcity.capriai'
  compileSdk 35
- defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 21; versionName '0.9.12'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' } }
+ defaultConfig { applicationId 'com.nightcity.capriai'; minSdk 29; targetSdk 34; versionCode 22; versionName '1.0.0'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64' } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
-
-// Build marker: Capri 0.9.12 studio customization, expression gallery and eye icon.
+dependencies {
+ implementation fileTree(dir: 'libs', include: ['*.aar'])
+ implementation 'org.apache.commons:commons-compress:1.27.1'
+}
+// Capri 1.0.0: matrix terminal, offline PT-BR voice, accessibility, outfits and choreography.
