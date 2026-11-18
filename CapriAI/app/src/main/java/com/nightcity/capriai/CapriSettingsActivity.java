@@ -49,7 +49,7 @@ public class CapriSettingsActivity extends Activity {
             }).start();
         });
         section("VOZ / PORTUGUÊS BRASILEIRO");
-        TextView voiceInfo=text("VOZ NEURAL ONLINE: usa Gemini TTS, não a voz instalada no celular. Selecione Google Gemini em CONVERSA / MODELO e use uma chave Gemini válida. A voz é sintética e original; não imita uma dubladora sem autorização.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
+        TextView voiceInfo=text("VOZ NEURAL ONLINE: usa Gemini TTS, não a voz instalada no celular. A chave Gemini TTS abaixo é separada da chave de conversa. Escolha uma voz pronta ou crie uma persona vocal original no AI Studio e cole o ID voice_...; replicação de voz exige consentimento da pessoa. A voz é sintética.",11,0xffa8a5b5);voiceInfo.setPadding(0,dp(4),0,dp(8));page.addView(voiceInfo);
         check("Usar voz neural online (sem voz padrão do celular)","cloud_voice",true);
         EditText geminiVoiceKey=field("Chave API Gemini para gerar a voz");geminiVoiceKey.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);geminiVoiceKey.setText(ApiKeyStore.getGemini(this));row("Chave Gemini TTS (armazenada criptografada)",geminiVoiceKey);
         String[] voiceNames={"Leda","Kore","Aoede","Zephyr","Puck","Charon","Fenrir","Orus","Callirrhoe","Autonoe","Enceladus","Iapetus","Umbriel","Algieba","Despina","Erinome","Algenib","Rasalgethi","Laomedeia","Achernar","Alnilam","Schedar","Gacrux","Pulcherrima","Achird","Zubenelgenubi","Vindemiatrix","Sadachbia","Sadaltager","Sulafat"};
