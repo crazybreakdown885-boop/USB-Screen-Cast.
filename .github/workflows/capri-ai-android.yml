@@ -48,10 +48,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="CapriAI/app/build/outputs/apk/debug/app-debug.apk"
-          TAG="capri-v0.9.3"
+          TAG="capri-v0.9.4"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "Capri AI Android 0.9.3" --notes "Capri 0.9.3: diálogos offline procedurais com variáveis, contexto e humor, com mais de 1 bilhão de combinações teóricas sem armazenar frases individualmente; movimento livre, teleporte e teste de API."
+            gh release edit "$TAG" --title "Capri AI Android 0.9.4" --notes "Capri 0.9.4: voz falada em português brasileiro com seleção automática da melhor voz pt-BR instalada, ajustes de velocidade e tom, e atalho para escolher/baixar vozes do Android. Mantém diálogos offline procedurais, movimento livre e teleporte."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.3" --notes "Capri 0.9.3: diálogos offline procedurais com variáveis, contexto e humor, com mais de 1 bilhão de combinações teóricas sem armazenar frases individualmente; movimento livre, teleporte e teste de API. APK debug ARMv7/ARM64."
+            gh release create "$TAG" "$APK" --title "Capri AI Android 0.9.4" --notes "Capri 0.9.4: voz falada em português brasileiro com seleção automática da melhor voz pt-BR instalada, ajustes de velocidade e tom, e atalho para escolher/baixar vozes do Android. Mantém diálogos offline procedurais, movimento livre e teleporte. APK debug ARMv7/ARM64."
           fi
