@@ -4,19 +4,20 @@ import android.content.Context;
 import android.graphics.*;
 import android.os.SystemClock;
 import android.view.View;
+import java.io.InputStream;
 
 /** Lightweight animated companion renderer for the Android overlay. */
 public class CapriSpriteView extends View {
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-    private final Bitmap art;
+    private Bitmap art;
     private long start = SystemClock.uptimeMillis();
     private boolean speaking = false;
     private boolean excited = false;
 
     public CapriSpriteView(Context c) {
         super(c);
-        Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.capri_portrait);
-        art = b;
+        try { String saved=c.getSharedPreferences("capri_settings",0).getString("character_image_uri",""); if(saved!=null&&!saved.isEmpty()){try(InputStream in=c.getContentResolver().openInputStream(android.net.Uri.parse(saved))){art=BitmapFactory.decodeStream(in);}} } catch(Exception ignored) { art=null; }
+        if(art==null)art=BitmapFactory.decodeResource(getResources(), R.drawable.capri_portrait);
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
     public void setSpeaking(boolean v) { speaking=v; invalidate(); }
